@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Server {
+  id                       Int                       @id @default(autoincrement())
+  name                     String
+  host                     String
+  port                     Int                       @default(22)
+  username                 String
+  password                 String?
+  privateKey               String?
+  status                   String                    @default("unknown")
+  lastChecked              DateTime?
+  connectionType           String                    @default("direct")
+  proxyId                  String?
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  commandMonitorExecutions CommandMonitorExecution[]
+  commandMonitors          CommandMonitor[]
+  taskExecutions           TaskExecution[]
+
+  @@map("servers")
+}
+
+model Task {
+  id             Int             @id @default(autoincrement())
+  name           String
+  description    String?
+  command        String
+  timeout        Int?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  taskExecutions TaskExecution[]
+
+  @@map("tasks")
+}
+
+model TaskExecution {
+  id          Int       @id @default(autoincrement())
+  status      String
+  output      String?
+  exitCode    Int?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  taskId      Int
+  serverId    Int
+  server      Server    @relation(fields: [serverId], references: [id])
+  task        Task      @relation(fields: [taskId], references: [id])
+
+  @@map("task_executions")
+}
+
+model Queue {
+  id          Int       @id @default(autoincrement())
+  taskId      Int
+  serverIds   String
+  priority    Int       @default(0)
+  status      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@map("queues")
+}
+
+model CommandMonitor {
+  id             Int                       @id @default(autoincrement())
+  name           String
+  description    String?
+  checkCommand   String
+  executeCommand String
+  enabled        Boolean                   @default(true)
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  serverId       Int
+  executions     CommandMonitorExecution[]
+  server         Server                    @relation(fields: [serverId], references: [id])
+
+  @@map("command_monitors")
+}
+
+model CommandMonitorExecution {
+  id              Int            @id @default(autoincrement())
+  checkOutput     String?
+  checkExitCode   Int
+  executed        Boolean
+  executeOutput   String?
+  executeExitCode Int?
+  executedAt      DateTime       @default(now())
+  monitorId       Int
+  serverId        Int
+  server          Server         @relation(fields: [serverId], references: [id])
+  monitor         CommandMonitor @relation(fields: [monitorId], references: [id])
+
+  @@map("command_monitor_executions")
+}
+
+model Proxy {
+  id          String    @id
+  name        String
+  description String?
+  apiKey      String?
+  lastSeen    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("proxies")
+}
