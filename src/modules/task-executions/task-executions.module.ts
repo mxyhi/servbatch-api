@@ -4,12 +4,14 @@ import { TaskExecutionsController } from './task-executions.controller';
 import { TasksModule } from '../tasks/tasks.module';
 import { ServersModule } from '../servers/servers.module';
 import { QueueModule } from '../queue/queue.module';
+import { CommonModule } from '../../common';
 
 @Module({
   imports: [
     forwardRef(() => TasksModule),
     ServersModule,
     forwardRef(() => QueueModule),
+    CommonModule,
   ],
   controllers: [TaskExecutionsController],
   providers: [TaskExecutionsService],

@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { TaskExecutionsService } from './task-executions.service';
 import { CreateTaskExecutionDto } from './dto/create-task-execution.dto';
@@ -19,8 +20,14 @@ import {
   ApiParam,
   ApiBody,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { TaskExecutionEntity } from './entities/task-execution.entity';
+import {
+  PaginationResultDto,
+  PaginationParamsDto,
+  ParsePaginationPipe,
+} from '../../common';
 
 @ApiTags('executions')
 @ApiBearerAuth()
@@ -36,14 +43,29 @@ export class TaskExecutionsController {
   }
 
   @Get()
-  @ApiOperation({ summary: '获取所有执行记录' })
+  @ApiOperation({ summary: '分页获取执行记录' })
+  @ApiQuery({
+    type: PaginationParamsDto,
+  })
   @ApiResponse({
     status: 200,
-    description: '返回所有执行记录',
-    type: [TaskExecutionEntity],
+    description: '返回分页的执行记录',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/TaskExecutionEntity' },
+            },
+          },
+        },
+      ],
+    },
   })
-  findAll() {
-    return this.taskExecutionsService.findAll();
+  findAll(@Query(ParsePaginationPipe) params: PaginationParamsDto) {
+    return this.taskExecutionsService.findAll(params);
   }
 
   @Get(':id')
@@ -60,27 +82,63 @@ export class TaskExecutionsController {
   }
 
   @Get('task/:taskId')
-  @ApiOperation({ summary: '获取指定任务的所有执行记录' })
+  @ApiOperation({ summary: '分页获取指定任务的执行记录' })
   @ApiParam({ name: 'taskId', description: '任务ID' })
+  @ApiQuery({
+    type: PaginationParamsDto,
+  })
   @ApiResponse({
     status: 200,
-    description: '返回指定任务的所有执行记录',
-    type: [TaskExecutionEntity],
+    description: '返回分页的任务执行记录',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/TaskExecutionEntity' },
+            },
+          },
+        },
+      ],
+    },
   })
-  findByTaskId(@Param('taskId', ParseIntPipe) taskId: number) {
-    return this.taskExecutionsService.findByTaskId(taskId);
+  findByTaskId(
+    @Param('taskId', ParseIntPipe) taskId: number,
+    @Query(ParsePaginationPipe) params: PaginationParamsDto,
+  ) {
+    return this.taskExecutionsService.findByTaskId(taskId, params);
   }
 
   @Get('server/:serverId')
-  @ApiOperation({ summary: '获取指定服务器的所有执行记录' })
+  @ApiOperation({ summary: '分页获取指定服务器的执行记录' })
   @ApiParam({ name: 'serverId', description: '服务器ID' })
+  @ApiQuery({
+    type: PaginationParamsDto,
+  })
   @ApiResponse({
     status: 200,
-    description: '返回指定服务器的所有执行记录',
-    type: [TaskExecutionEntity],
+    description: '返回分页的服务器执行记录',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/TaskExecutionEntity' },
+            },
+          },
+        },
+      ],
+    },
   })
-  findByServerId(@Param('serverId', ParseIntPipe) serverId: number) {
-    return this.taskExecutionsService.findByServerId(serverId);
+  findByServerId(
+    @Param('serverId', ParseIntPipe) serverId: number,
+    @Query(ParsePaginationPipe) params: PaginationParamsDto,
+  ) {
+    return this.taskExecutionsService.findByServerId(serverId, params);
   }
 
   @Post(':id/cancel')

@@ -13,12 +13,20 @@ import {
   ImportServersResultDto,
   ImportFailureServerDto,
 } from './dto/import-servers.dto';
+import {
+  PaginationResultDto,
+  PaginationParamsDto,
+  PaginationService,
+} from '../../common';
 
 @Injectable()
 export class ServersService {
   private readonly logger = new Logger(ServersService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paginationService: PaginationService,
+  ) {}
 
   async create(createServerDto: CreateServerDto): Promise<ServerEntity> {
     return this.prisma.server.create({
@@ -26,8 +34,15 @@ export class ServersService {
     });
   }
 
-  async findAll(): Promise<ServerEntity[]> {
-    return this.prisma.server.findMany();
+  async findAll(
+    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<ServerEntity>> {
+    return this.paginationService.paginate<ServerEntity>(
+      this.prisma.server,
+      params,
+      {}, // where
+      { createdAt: 'desc' }, // orderBy
+    );
   }
 
   async findOne(id: number): Promise<ServerEntity> {

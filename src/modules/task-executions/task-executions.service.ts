@@ -11,6 +11,11 @@ import { CleanupResultDto } from './dto/cleanup-result.dto';
 import { TasksService } from '../tasks/tasks.service';
 import { ServersService } from '../servers/servers.service';
 import { QueueService } from '../queue/queue.service';
+import {
+  PaginationResultDto,
+  PaginationParamsDto,
+  PaginationService,
+} from '../../common';
 
 @Injectable()
 export class TaskExecutionsService {
@@ -21,6 +26,7 @@ export class TaskExecutionsService {
     private readonly tasksService: TasksService,
     private readonly serversService: ServersService,
     private readonly queueService: QueueService,
+    private readonly paginationService: PaginationService,
   ) {}
 
   async create(
@@ -47,10 +53,15 @@ export class TaskExecutionsService {
     };
   }
 
-  async findAll(): Promise<TaskExecutionEntity[]> {
-    return this.prisma.taskExecution.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(
+    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<TaskExecutionEntity>> {
+    return this.paginationService.paginate<TaskExecutionEntity>(
+      this.prisma.taskExecution,
+      params,
+      {}, // where
+      { createdAt: 'desc' }, // orderBy
+    );
   }
 
   async findOne(id: number): Promise<TaskExecutionEntity> {
@@ -65,18 +76,28 @@ export class TaskExecutionsService {
     return execution;
   }
 
-  async findByTaskId(taskId: number): Promise<TaskExecutionEntity[]> {
-    return this.prisma.taskExecution.findMany({
-      where: { taskId },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findByTaskId(
+    taskId: number,
+    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<TaskExecutionEntity>> {
+    return this.paginationService.paginate<TaskExecutionEntity>(
+      this.prisma.taskExecution,
+      params,
+      { taskId }, // where
+      { createdAt: 'desc' }, // orderBy
+    );
   }
 
-  async findByServerId(serverId: number): Promise<TaskExecutionEntity[]> {
-    return this.prisma.taskExecution.findMany({
-      where: { serverId },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findByServerId(
+    serverId: number,
+    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<TaskExecutionEntity>> {
+    return this.paginationService.paginate<TaskExecutionEntity>(
+      this.prisma.taskExecution,
+      params,
+      { serverId }, // where
+      { createdAt: 'desc' }, // orderBy
+    );
   }
 
   async cancel(id: number): Promise<TaskExecutionEntity> {

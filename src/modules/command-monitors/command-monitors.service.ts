@@ -5,9 +5,13 @@ import { UpdateCommandMonitorDto } from './dto/update-command-monitor.dto';
 import { CommandMonitorEntity } from './entities/command-monitor.entity';
 import { CommandMonitorExecutionEntity } from './entities/command-monitor-execution.entity';
 import { ServersService } from '../servers/servers.service';
-import { PaginationResultDto } from './dto/pagination-result.dto';
 import { CleanupByDateDto } from './dto/cleanup-by-date.dto';
 import { CleanupResultDto } from './dto/cleanup-result.dto';
+import {
+  PaginationResultDto,
+  PaginationParamsDto,
+  PaginationService,
+} from '../../common';
 
 @Injectable()
 export class CommandMonitorsService {
@@ -16,6 +20,7 @@ export class CommandMonitorsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serversService: ServersService,
+    private readonly paginationService: PaginationService,
   ) {}
 
   async create(
@@ -101,38 +106,17 @@ export class CommandMonitorsService {
 
   async getExecutions(
     monitorId: number,
-    page = 1,
-    pageSize = 10,
+    params: PaginationParamsDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<CommandMonitorExecutionEntity>> {
     // 验证监控是否存在
     await this.findOne(monitorId);
 
-    // 计算分页参数
-    const skip = (page - 1) * pageSize;
-
-    // 查询总数
-    const total = await this.prisma.commandMonitorExecution.count({
-      where: { monitorId },
-    });
-
-    // 查询数据
-    const items = await this.prisma.commandMonitorExecution.findMany({
-      where: { monitorId },
-      orderBy: { executedAt: 'desc' },
-      skip,
-      take: pageSize,
-    });
-
-    // 计算总页数
-    const totalPages = Math.ceil(total / pageSize);
-
-    return {
-      total,
-      page,
-      pageSize,
-      totalPages,
-      items,
-    };
+    return this.paginationService.paginate<CommandMonitorExecutionEntity>(
+      this.prisma.commandMonitorExecution,
+      params,
+      { monitorId }, // where
+      { executedAt: 'desc' }, // orderBy
+    );
   }
 
   async cleanupExecutionsByDate(

@@ -23,9 +23,13 @@ import {
 } from '@nestjs/swagger';
 import { CommandMonitorEntity } from './entities/command-monitor.entity';
 import { CommandMonitorExecutionEntity } from './entities/command-monitor-execution.entity';
-import { PaginationResultDto } from './dto/pagination-result.dto';
 import { CleanupByDateDto } from './dto/cleanup-by-date.dto';
 import { CleanupResultDto } from './dto/cleanup-result.dto';
+import {
+  PaginationResultDto,
+  PaginationParamsDto,
+  ParsePaginationPipe,
+} from '../../common';
 
 @ApiTags('command-monitors')
 @ApiBearerAuth()
@@ -121,35 +125,35 @@ export class CommandMonitorsController {
   }
 
   @Get(':id/executions')
-  @ApiOperation({ summary: '获取命令监控执行历史' })
+  @ApiOperation({ summary: '分页获取命令监控执行历史' })
   @ApiParam({ name: 'id', description: '命令监控ID' })
   @ApiQuery({
-    name: 'page',
-    description: '页码',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'pageSize',
-    description: '每页数量',
-    required: false,
-    type: Number,
+    type: PaginationParamsDto,
   })
   @ApiResponse({
     status: 200,
-    description: '返回命令监控执行历史',
-    type: PaginationResultDto,
+    description: '返回分页的命令监控执行历史',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/CommandMonitorExecutionEntity',
+              },
+            },
+          },
+        },
+      ],
+    },
   })
   getExecutions(
     @Param('id', ParseIntPipe) id: number,
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
+    @Query(ParsePaginationPipe) params: PaginationParamsDto,
   ) {
-    return this.commandMonitorsService.getExecutions(
-      id,
-      page ? parseInt(page as any) : 1,
-      pageSize ? parseInt(pageSize as any) : 10,
-    );
+    return this.commandMonitorsService.getExecutions(id, params);
   }
 
   @Post(':id/executions/cleanup')

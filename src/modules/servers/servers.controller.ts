@@ -8,6 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { ServersService } from './servers.service';
 import { CreateServerDto } from './dto/create-server.dto';
@@ -19,6 +20,7 @@ import {
   ApiParam,
   ApiBody,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { ServerEntity } from './entities/server.entity';
 import { SshService } from '../ssh/ssh.service';
@@ -26,6 +28,11 @@ import {
   ImportServersDto,
   ImportServersResultDto,
 } from './dto/import-servers.dto';
+import {
+  PaginationResultDto,
+  PaginationParamsDto,
+  ParsePaginationPipe,
+} from '../../common';
 
 @ApiTags('servers')
 @ApiBearerAuth()
@@ -48,14 +55,29 @@ export class ServersController {
   }
 
   @Get()
-  @ApiOperation({ summary: '获取所有服务器' })
+  @ApiOperation({ summary: '分页获取服务器列表' })
+  @ApiQuery({
+    type: PaginationParamsDto,
+  })
   @ApiResponse({
     status: 200,
-    description: '返回所有服务器列表',
-    type: [ServerEntity],
+    description: '返回分页的服务器列表',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/ServerEntity' },
+            },
+          },
+        },
+      ],
+    },
   })
-  findAll() {
-    return this.serversService.findAll();
+  findAll(@Query(ParsePaginationPipe) params: PaginationParamsDto) {
+    return this.serversService.findAll(params);
   }
 
   @Get(':id')

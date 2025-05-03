@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -17,10 +18,16 @@ import {
   ApiResponse,
   ApiParam,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { TaskEntity } from './entities/task.entity';
 import { TaskExecutionsService } from '../task-executions/task-executions.service';
 import { CreateTaskExecutionDto } from '../task-executions/dto/create-task-execution.dto';
+import {
+  PaginationResultDto,
+  PaginationParamsDto,
+  ParsePaginationPipe,
+} from '../../common';
 
 @ApiTags('tasks')
 @ApiBearerAuth()
@@ -39,14 +46,29 @@ export class TasksController {
   }
 
   @Get()
-  @ApiOperation({ summary: '获取所有任务' })
+  @ApiOperation({ summary: '分页获取任务列表' })
+  @ApiQuery({
+    type: PaginationParamsDto,
+  })
   @ApiResponse({
     status: 200,
-    description: '返回所有任务列表',
-    type: [TaskEntity],
+    description: '返回分页的任务列表',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/TaskEntity' },
+            },
+          },
+        },
+      ],
+    },
   })
-  findAll() {
-    return this.tasksService.findAll();
+  findAll(@Query(ParsePaginationPipe) params: PaginationParamsDto) {
+    return this.tasksService.findAll(params);
   }
 
   @Get(':id')
@@ -101,13 +123,35 @@ export class TasksController {
   }
 
   @Get(':id/executions')
-  @ApiOperation({ summary: '获取任务执行历史' })
+  @ApiOperation({ summary: '分页获取任务执行历史' })
   @ApiParam({ name: 'id', description: '任务ID' })
-  @ApiResponse({ status: 200, description: '返回任务执行历史' })
+  @ApiQuery({
+    type: PaginationParamsDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '返回分页的任务执行历史',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/TaskExecutionEntity' },
+            },
+          },
+        },
+      ],
+    },
+  })
   @ApiResponse({ status: 404, description: '任务不存在' })
-  async getTaskExecutions(@Param('id', ParseIntPipe) id: number) {
+  async getTaskExecutions(
+    @Param('id', ParseIntPipe) id: number,
+    @Query(ParsePaginationPipe) params: PaginationParamsDto,
+  ) {
     // 验证任务是否存在
     await this.tasksService.findOne(id);
-    return this.taskExecutionsService.findByTaskId(id);
+    return this.taskExecutionsService.findByTaskId(id, params);
   }
 }

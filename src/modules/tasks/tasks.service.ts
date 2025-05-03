@@ -3,12 +3,20 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskEntity } from './entities/task.entity';
+import {
+  PaginationResultDto,
+  PaginationParamsDto,
+  PaginationService,
+} from '../../common';
 
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paginationService: PaginationService,
+  ) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<TaskEntity> {
     return this.prisma.task.create({
@@ -16,8 +24,15 @@ export class TasksService {
     });
   }
 
-  async findAll(): Promise<TaskEntity[]> {
-    return this.prisma.task.findMany();
+  async findAll(
+    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<TaskEntity>> {
+    return this.paginationService.paginate<TaskEntity>(
+      this.prisma.task,
+      params,
+      {}, // where
+      { createdAt: 'desc' }, // orderBy
+    );
   }
 
   async findOne(id: number): Promise<TaskEntity> {

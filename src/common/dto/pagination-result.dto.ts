@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/**
+ * 分页结果DTO
+ * 用于返回分页查询结果
+ */
 export class PaginationResultDto<T> {
   @ApiProperty({ description: '总记录数' })
   total: number;

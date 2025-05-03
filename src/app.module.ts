@@ -18,6 +18,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { CommonModule } from './common';
 
 @Module({
   imports: [
@@ -31,6 +32,8 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
     ScheduleModule.forRoot(),
     // 注册Prisma模块
     PrismaModule,
+    // 注册通用模块
+    CommonModule,
     // 注册业务模块
     ServersModule,
     TasksModule,
