@@ -58,14 +58,13 @@ export class ServersService {
       where.connectionType = params.connectionType;
     }
 
-    // 使用分页服务进行查询，并指定可搜索字段
+    // 使用分页服务进行查询
     return this.paginationService.paginate<ServerEntity>(
       this.prisma.server,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
-      ['name', 'host', 'username'], // 可搜索字段（用于关键字搜索）
     );
   }
 

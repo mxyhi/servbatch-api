@@ -3,11 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskEntity } from './entities/task.entity';
-import {
-  PaginationResultDto,
-  PaginationParamsDto,
-  PaginationService,
-} from '../../common';
+import { PaginationResultDto, PaginationService } from '../../common';
 import { TaskQueryDto } from './dto/task-query.dto';
 
 @Injectable()
@@ -44,14 +40,13 @@ export class TasksService {
       };
     }
 
-    // 使用分页服务进行查询，并指定可搜索字段
+    // 使用分页服务进行查询
     return this.paginationService.paginate<TaskEntity>(
       this.prisma.task,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
-      ['name', 'description', 'command'], // 可搜索字段（用于关键字搜索）
     );
   }
 

@@ -15,9 +15,10 @@ export class ProxiesMonitorService {
   @Cron(CronExpression.EVERY_MINUTE)
   async checkProxiesStatus() {
     try {
-      const proxies = await this.proxiesService.findAll();
+      const result = await this.proxiesService.findAll();
+      const proxyItems = result.items;
 
-      for (const proxy of proxies) {
+      for (const proxy of proxyItems) {
         const isOnline = this.proxyGateway.isProxyOnline(proxy.id);
         const currentStatus = isOnline ? 'online' : 'offline';
 

@@ -54,14 +54,13 @@ export class ProxiesService {
       };
     }
 
-    // 使用分页服务进行查询，并指定可搜索字段
+    // 使用分页服务进行查询
     const result = await this.paginationService.paginate<ProxyEntity>(
       this.prisma.proxy,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
-      ['id', 'name', 'description'], // 可搜索字段（用于关键字搜索）
     );
 
     // 添加在线状态
@@ -158,14 +157,13 @@ export class ProxiesService {
       };
     }
 
-    // 使用分页服务进行查询，并指定可搜索字段
+    // 使用分页服务进行查询
     const result = await this.paginationService.paginate<ProxyEntity>(
       this.prisma.proxy,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
-      ['id', 'name', 'description'], // 可搜索字段（用于关键字搜索）
     );
 
     // 添加在线状态

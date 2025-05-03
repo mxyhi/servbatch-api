@@ -1,7 +1,7 @@
 // 导出DTO
-export * from './dto/search-params.dto';
 export * from './dto/pagination-params.dto';
 export * from './dto/pagination-result.dto';
+export * from './dto/pagination-where.dto';
 
 // 导出管道
 export * from './pipes/parse-pagination.pipe';

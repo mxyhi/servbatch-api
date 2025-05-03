@@ -87,14 +87,13 @@ export class UsersService {
       where.isActive = params.isActive;
     }
 
-    // 使用分页服务进行查询，并指定可搜索字段
+    // 使用分页服务进行查询
     const result = await this.paginationService.paginate<any>(
       this.prisma.user,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
-      ['username', 'email'], // 可搜索字段（用于关键字搜索）
     );
 
     // 移除密码字段

@@ -13,7 +13,6 @@ import {
   PaginationParamsDto,
   PaginationService,
   CleanupUtil,
-  buildDateRangeFilter,
   ErrorHandler,
 } from '../../common';
 
@@ -59,14 +58,13 @@ export class CommandMonitorsService {
       where.serverId = params.serverId;
     }
 
-    // 使用分页服务进行查询，并指定可搜索字段
+    // 使用分页服务进行查询
     return this.paginationService.paginate<CommandMonitorEntity>(
       this.prisma.commandMonitor,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
-      ['name', 'description', 'checkCommand', 'executeCommand'], // 可搜索字段（用于关键字搜索）
     );
   }
 

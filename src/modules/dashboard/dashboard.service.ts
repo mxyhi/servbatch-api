@@ -123,24 +123,25 @@ export class DashboardService {
 
   async getProxyStatus() {
     // 获取所有代理及其在线状态
-    return this.proxiesService.findAll();
+    const result = await this.proxiesService.findAll();
+    return result.items;
   }
 
   async getSummaryWithProxies() {
-    const [summary, proxyStatus] = await Promise.all([
+    const [summary, proxyItems] = await Promise.all([
       this.getSummary(),
       this.getProxyStatus(),
     ]);
 
     // 计算在线和离线代理数量
-    const onlineProxies = proxyStatus.filter(
+    const onlineProxies = proxyItems.filter(
       (proxy) => proxy.status === 'online',
     ).length;
-    const offlineProxies = proxyStatus.length - onlineProxies;
+    const offlineProxies = proxyItems.length - onlineProxies;
 
     return {
       ...summary,
-      proxyCount: proxyStatus.length,
+      proxyCount: proxyItems.length,
       onlineProxies,
       offlineProxies,
     };
