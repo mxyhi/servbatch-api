@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { PaginationResultDto, PaginationParamsDto } from './common';
 
 async function bootstrap() {
   console.log('应用启动中...', process.env.DATABASE_URL);
@@ -31,7 +32,9 @@ async function bootstrap() {
     .addTag('users', '用户管理')
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config, {
+    extraModels: [PaginationResultDto, PaginationParamsDto],
+  });
   SwaggerModule.setup('api-docs', app, document);
 
   // 启用CORS

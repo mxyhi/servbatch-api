@@ -21,7 +21,6 @@ import {
   ApiBody,
   ApiBearerAuth,
   ApiQuery,
-  ApiExtraModels,
 } from '@nestjs/swagger';
 import { ServerEntity } from './entities/server.entity';
 import { SshService } from '../ssh/ssh.service';
@@ -35,7 +34,6 @@ import { ServerQueryDto } from './dto/server-query.dto';
 @ApiTags('servers')
 @ApiBearerAuth()
 @Controller('servers')
-@ApiExtraModels(ServerQueryDto)
 export class ServersController {
   constructor(
     private readonly serversService: ServersService,
@@ -55,9 +53,6 @@ export class ServersController {
 
   @Get()
   @ApiOperation({ summary: '分页获取服务器列表' })
-  @ApiQuery({
-    type: ServerQueryDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的服务器列表',

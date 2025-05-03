@@ -44,9 +44,6 @@ export class TaskExecutionsController {
 
   @Get()
   @ApiOperation({ summary: '分页获取执行记录' })
-  @ApiQuery({
-    type: PaginationParamsDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的执行记录',
@@ -84,9 +81,6 @@ export class TaskExecutionsController {
   @Get('task/:taskId')
   @ApiOperation({ summary: '分页获取指定任务的执行记录' })
   @ApiParam({ name: 'taskId', description: '任务ID' })
-  @ApiQuery({
-    type: PaginationParamsDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的任务执行记录',
@@ -114,9 +108,6 @@ export class TaskExecutionsController {
   @Get('server/:serverId')
   @ApiOperation({ summary: '分页获取指定服务器的执行记录' })
   @ApiParam({ name: 'serverId', description: '服务器ID' })
-  @ApiQuery({
-    type: PaginationParamsDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的服务器执行记录',

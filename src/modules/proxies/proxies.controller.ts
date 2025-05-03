@@ -42,9 +42,6 @@ export class ProxiesController {
 
   @Get()
   @ApiOperation({ summary: '分页获取代理列表' })
-  @ApiQuery({
-    type: ProxyQueryDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的代理列表',
@@ -68,9 +65,6 @@ export class ProxiesController {
 
   @Get('online')
   @ApiOperation({ summary: '分页获取所有在线代理' })
-  @ApiQuery({
-    type: ProxyQueryDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的在线代理列表',

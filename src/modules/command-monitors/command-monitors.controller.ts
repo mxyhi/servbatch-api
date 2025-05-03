@@ -53,9 +53,6 @@ export class CommandMonitorsController {
 
   @Get()
   @ApiOperation({ summary: '分页获取命令监控列表' })
-  @ApiQuery({
-    type: CommandMonitorQueryDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的命令监控列表',
@@ -143,9 +140,6 @@ export class CommandMonitorsController {
   @Get(':id/executions')
   @ApiOperation({ summary: '分页获取命令监控执行历史' })
   @ApiParam({ name: 'id', description: '命令监控ID' })
-  @ApiQuery({
-    type: PaginationParamsDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的命令监控执行历史',

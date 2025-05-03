@@ -47,9 +47,6 @@ export class UsersController {
 
   @Get()
   @ApiOperation({ summary: '分页获取用户列表' })
-  @ApiQuery({
-    type: UserQueryDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的用户列表',

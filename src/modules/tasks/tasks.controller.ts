@@ -48,9 +48,6 @@ export class TasksController {
 
   @Get()
   @ApiOperation({ summary: '分页获取任务列表' })
-  @ApiQuery({
-    type: TaskQueryDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的任务列表',
@@ -126,9 +123,6 @@ export class TasksController {
   @Get(':id/executions')
   @ApiOperation({ summary: '分页获取任务执行历史' })
   @ApiParam({ name: 'id', description: '任务ID' })
-  @ApiQuery({
-    type: PaginationParamsDto,
-  })
   @ApiResponse({
     status: 200,
     description: '返回分页的任务执行历史',
