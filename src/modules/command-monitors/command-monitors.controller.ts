@@ -70,7 +70,7 @@ export class CommandMonitorsController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: CommandMonitorQueryDto) {
+  findByLimit(@Query(ParsePaginationPipe) params: CommandMonitorQueryDto) {
     return this.commandMonitorsService.findByLimit(params);
   }
 

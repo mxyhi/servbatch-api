@@ -70,7 +70,7 @@ export class ServersController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: ServerQueryDto) {
+  findByLimit(@Query(ParsePaginationPipe) params: ServerQueryDto) {
     // 直接使用查询参数
     return this.serversService.findByLimit(params);
   }

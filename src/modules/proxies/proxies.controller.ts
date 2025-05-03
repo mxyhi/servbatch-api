@@ -59,7 +59,7 @@ export class ProxiesController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: ProxyQueryDto) {
+  findByLimit(@Query(ParsePaginationPipe) params: ProxyQueryDto) {
     return this.proxiesService.findByLimit(params);
   }
 

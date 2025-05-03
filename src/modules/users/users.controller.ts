@@ -64,7 +64,7 @@ export class UsersController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: UserQueryDto) {
+  findByLimit(@Query(ParsePaginationPipe) params: UserQueryDto) {
     // 直接使用查询参数
     return this.usersService.findByLimit(params);
   }

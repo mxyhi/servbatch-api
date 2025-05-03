@@ -65,7 +65,7 @@ export class TasksController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: TaskQueryDto) {
+  findByLimit(@Query(ParsePaginationPipe) params: TaskQueryDto) {
     return this.tasksService.findByLimit(params);
   }
 
