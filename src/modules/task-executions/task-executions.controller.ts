@@ -65,7 +65,7 @@ export class TaskExecutionsController {
     },
   })
   findAll(@Query(ParsePaginationPipe) params: PaginationParamsDto) {
-    return this.taskExecutionsService.findAll(params);
+    return this.taskExecutionsService.findByLimit(params);
   }
 
   @Get(':id')

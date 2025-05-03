@@ -37,7 +37,7 @@ export class ProxiesService {
     });
   }
 
-  async findAll(
+  async findByLimit(
     params: ProxyQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<ProxyEntity>> {
     // 构建查询条件
@@ -55,7 +55,7 @@ export class ProxiesService {
     }
 
     // 使用分页服务进行查询
-    const result = await this.paginationService.paginate<ProxyEntity>(
+    const result = await this.paginationService.paginateByLimit<ProxyEntity>(
       this.prisma.proxy,
       params,
       where, // where
@@ -70,6 +70,16 @@ export class ProxiesService {
     }));
 
     return result;
+  }
+
+  /**
+   * 分页获取代理列表（别名，保持向后兼容）
+   * @deprecated 请使用 findByLimit 方法
+   */
+  async findAll(
+    params: ProxyQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<ProxyEntity>> {
+    return this.findByLimit(params);
   }
 
   async findOne(id: string): Promise<ProxyEntity> {
@@ -158,7 +168,7 @@ export class ProxiesService {
     }
 
     // 使用分页服务进行查询
-    const result = await this.paginationService.paginate<ProxyEntity>(
+    const result = await this.paginationService.paginateByLimit<ProxyEntity>(
       this.prisma.proxy,
       params,
       where, // where

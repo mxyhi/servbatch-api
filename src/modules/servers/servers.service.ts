@@ -31,7 +31,7 @@ export class ServersService {
     });
   }
 
-  async findAll(
+  async findByLimit(
     params: ServerQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<ServerEntity>> {
     // 构建查询条件
@@ -59,13 +59,23 @@ export class ServersService {
     }
 
     // 使用分页服务进行查询
-    return this.paginationService.paginate<ServerEntity>(
+    return this.paginationService.paginateByLimit<ServerEntity>(
       this.prisma.server,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
     );
+  }
+
+  /**
+   * 分页获取服务器列表（别名，保持向后兼容）
+   * @deprecated 请使用 findByLimit 方法
+   */
+  async findAll(
+    params: ServerQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<ServerEntity>> {
+    return this.findByLimit(params);
   }
 
   async findOne(id: number): Promise<ServerEntity> {

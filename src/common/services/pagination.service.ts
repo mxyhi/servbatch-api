@@ -28,7 +28,7 @@ export class PaginationService {
   }
 
   /**
-   * 通用分页方法
+   * 通用分页查询方法
    * @param model Prisma模型
    * @param params 分页参数
    * @param where 查询条件
@@ -36,7 +36,7 @@ export class PaginationService {
    * @param include 关联查询
    * @returns 分页结果
    */
-  async paginate<T>(
+  async paginateByLimit<T>(
     model: any,
     params: PaginationParamsDto,
     where: any = {},
@@ -71,5 +71,19 @@ export class PaginationService {
       totalPages,
       items,
     };
+  }
+
+  /**
+   * 通用分页方法（别名，保持向后兼容）
+   * @deprecated 请使用 paginateByLimit 方法
+   */
+  async paginate<T>(
+    model: any,
+    params: PaginationParamsDto,
+    where: any = {},
+    orderBy: any = {},
+    include: any = {},
+  ): Promise<PaginationResultDto<T>> {
+    return this.paginateByLimit<T>(model, params, where, orderBy, include);
   }
 }

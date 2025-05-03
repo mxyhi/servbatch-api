@@ -37,7 +37,7 @@ export class CommandMonitorsService {
     });
   }
 
-  async findAll(
+  async findByLimit(
     params: CommandMonitorQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<CommandMonitorEntity>> {
     // 构建查询条件
@@ -59,13 +59,23 @@ export class CommandMonitorsService {
     }
 
     // 使用分页服务进行查询
-    return this.paginationService.paginate<CommandMonitorEntity>(
+    return this.paginationService.paginateByLimit<CommandMonitorEntity>(
       this.prisma.commandMonitor,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
     );
+  }
+
+  /**
+   * 分页获取命令监控列表（别名，保持向后兼容）
+   * @deprecated 请使用 findByLimit 方法
+   */
+  async findAll(
+    params: CommandMonitorQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<CommandMonitorEntity>> {
+    return this.findByLimit(params);
   }
 
   async findOne(id: number): Promise<CommandMonitorEntity> {
@@ -141,7 +151,7 @@ export class CommandMonitorsService {
     // 验证监控是否存在
     await this.findOne(monitorId);
 
-    return this.paginationService.paginate<CommandMonitorExecutionEntity>(
+    return this.paginationService.paginateByLimit<CommandMonitorExecutionEntity>(
       this.prisma.commandMonitorExecution,
       params,
       { monitorId }, // where

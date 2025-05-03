@@ -106,11 +106,11 @@ export class ServersController {
         connectionType: params.where.connectionType,
       };
 
-      return this.serversService.findAll(queryParams);
+      return this.serversService.findByLimit(queryParams);
     }
 
     // 如果没有使用where参数，按原来的方式处理
-    return this.serversService.findAll(params);
+    return this.serversService.findByLimit(params);
   }
 
   @Get(':id')

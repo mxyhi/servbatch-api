@@ -21,7 +21,7 @@ export class TasksService {
     });
   }
 
-  async findAll(
+  async findByLimit(
     params: TaskQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<TaskEntity>> {
     // 构建查询条件
@@ -41,13 +41,23 @@ export class TasksService {
     }
 
     // 使用分页服务进行查询
-    return this.paginationService.paginate<TaskEntity>(
+    return this.paginationService.paginateByLimit<TaskEntity>(
       this.prisma.task,
       params,
       where, // where
       { createdAt: 'desc' }, // orderBy
       {}, // include
     );
+  }
+
+  /**
+   * 分页获取任务列表（别名，保持向后兼容）
+   * @deprecated 请使用 findByLimit 方法
+   */
+  async findAll(
+    params: TaskQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<TaskEntity>> {
+    return this.findByLimit(params);
   }
 
   async findOne(id: number): Promise<TaskEntity> {

@@ -60,7 +60,7 @@ export class UsersService {
     return result;
   }
 
-  async findAll(
+  async findByLimit(
     params: UserQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<UserEntity>> {
     // 构建查询条件
@@ -88,7 +88,7 @@ export class UsersService {
     }
 
     // 使用分页服务进行查询
-    const result = await this.paginationService.paginate<any>(
+    const result = await this.paginationService.paginateByLimit<any>(
       this.prisma.user,
       params,
       where, // where
@@ -100,6 +100,16 @@ export class UsersService {
     result.items = result.items.map(({ password, ...rest }) => rest);
 
     return result;
+  }
+
+  /**
+   * 分页获取用户列表（别名，保持向后兼容）
+   * @deprecated 请使用 findByLimit 方法
+   */
+  async findAll(
+    params: UserQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<UserEntity>> {
+    return this.findByLimit(params);
   }
 
   async findOne(id: number): Promise<UserEntity> {

@@ -74,7 +74,7 @@ export class CommandMonitorsController {
     },
   })
   findAll(@Query(ParsePaginationPipe) params: CommandMonitorQueryDto) {
-    return this.commandMonitorsService.findAll(params);
+    return this.commandMonitorsService.findByLimit(params);
   }
 
   @Get(':id')

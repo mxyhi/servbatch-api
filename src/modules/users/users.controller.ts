@@ -99,11 +99,11 @@ export class UsersController {
         isActive: params.where.isActive,
       };
 
-      return this.usersService.findAll(queryParams);
+      return this.usersService.findByLimit(queryParams);
     }
 
     // 如果没有使用where参数，按原来的方式处理
-    return this.usersService.findAll(params);
+    return this.usersService.findByLimit(params);
   }
 
   @Get(':id')

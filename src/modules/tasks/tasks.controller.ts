@@ -69,7 +69,7 @@ export class TasksController {
     },
   })
   findAll(@Query(ParsePaginationPipe) params: TaskQueryDto) {
-    return this.tasksService.findAll(params);
+    return this.tasksService.findByLimit(params);
   }
 
   @Get(':id')

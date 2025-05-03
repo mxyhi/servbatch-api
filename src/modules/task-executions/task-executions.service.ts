@@ -56,15 +56,25 @@ export class TaskExecutionsService {
     };
   }
 
-  async findAll(
+  async findByLimit(
     params: PaginationParamsDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<TaskExecutionEntity>> {
-    return this.paginationService.paginate<TaskExecutionEntity>(
+    return this.paginationService.paginateByLimit<TaskExecutionEntity>(
       this.prisma.taskExecution,
       params,
       {}, // where
       { createdAt: 'desc' }, // orderBy
     );
+  }
+
+  /**
+   * 分页获取任务执行记录列表（别名，保持向后兼容）
+   * @deprecated 请使用 findByLimit 方法
+   */
+  async findAll(
+    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<TaskExecutionEntity>> {
+    return this.findByLimit(params);
   }
 
   async findOne(id: number): Promise<TaskExecutionEntity> {
@@ -83,7 +93,7 @@ export class TaskExecutionsService {
     taskId: number,
     params: PaginationParamsDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<TaskExecutionEntity>> {
-    return this.paginationService.paginate<TaskExecutionEntity>(
+    return this.paginationService.paginateByLimit<TaskExecutionEntity>(
       this.prisma.taskExecution,
       params,
       { taskId }, // where
@@ -95,7 +105,7 @@ export class TaskExecutionsService {
     serverId: number,
     params: PaginationParamsDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<TaskExecutionEntity>> {
-    return this.paginationService.paginate<TaskExecutionEntity>(
+    return this.paginationService.paginateByLimit<TaskExecutionEntity>(
       this.prisma.taskExecution,
       params,
       { serverId }, // where
