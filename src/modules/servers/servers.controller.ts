@@ -18,6 +18,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ServerEntity } from './entities/server.entity';
 import { SshService } from '../ssh/ssh.service';
@@ -27,6 +28,7 @@ import {
 } from './dto/import-servers.dto';
 
 @ApiTags('servers')
+@ApiBearerAuth()
 @Controller('servers')
 export class ServersController {
   constructor(

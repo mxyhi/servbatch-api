@@ -18,10 +18,12 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { TaskExecutionEntity } from './entities/task-execution.entity';
 
 @ApiTags('executions')
+@ApiBearerAuth()
 @Controller('executions')
 export class TaskExecutionsController {
   constructor(private readonly taskExecutionsService: TaskExecutionsService) {}

@@ -19,6 +19,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CommandMonitorEntity } from './entities/command-monitor.entity';
 import { CommandMonitorExecutionEntity } from './entities/command-monitor-execution.entity';
@@ -27,6 +28,7 @@ import { CleanupByDateDto } from './dto/cleanup-by-date.dto';
 import { CleanupResultDto } from './dto/cleanup-result.dto';
 
 @ApiTags('command-monitors')
+@ApiBearerAuth()
 @Controller('command-monitors')
 export class CommandMonitorsController {
   constructor(

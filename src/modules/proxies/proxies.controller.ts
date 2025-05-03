@@ -15,10 +15,12 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProxyEntity } from './entities/proxy.entity';
 
 @ApiTags('proxies')
+@ApiBearerAuth()
 @Controller('proxies')
 export class ProxiesController {
   constructor(private readonly proxiesService: ProxiesService) {}
