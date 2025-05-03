@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
+  console.log('应用启动中...', process.env.DATABASE_URL);
   const app = await NestFactory.create(AppModule);
 
   // 启用全局验证管道

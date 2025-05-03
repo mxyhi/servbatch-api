@@ -1,0 +1,44 @@
+# 版本控制
+.git
+.gitignore
+
+# 依赖
+node_modules
+npm-debug.log
+pnpm-debug.log
+
+# 构建产物
+dist
+build
+
+# 环境文件
+.env
+.env.*
+!.env.example
+
+# 测试
+coverage
+.nyc_output
+
+# IDE
+.idea
+.vscode
+*.sublime-workspace
+*.sublime-project
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 数据文件
+*.db
+data/
+
+# 日志
+logs
+*.log
+
+# Docker相关
+Dockerfile
+docker-compose.yml
+.dockerignore
