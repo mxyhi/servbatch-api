@@ -28,11 +28,8 @@ import {
   ImportServersDto,
   ImportServersResultDto,
 } from './dto/import-servers.dto';
-import {
-  PaginationResultDto,
-  PaginationParamsDto,
-  ParsePaginationPipe,
-} from '../../common';
+import { ParsePaginationPipe } from '../../common';
+import { ServerQueryDto } from './dto/server-query.dto';
 
 @ApiTags('servers')
 @ApiBearerAuth()
@@ -57,7 +54,7 @@ export class ServersController {
   @Get()
   @ApiOperation({ summary: '分页获取服务器列表' })
   @ApiQuery({
-    type: PaginationParamsDto,
+    type: ServerQueryDto,
   })
   @ApiResponse({
     status: 200,
@@ -76,7 +73,7 @@ export class ServersController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: PaginationParamsDto) {
+  findAll(@Query(ParsePaginationPipe) params: ServerQueryDto) {
     return this.serversService.findAll(params);
   }
 

@@ -1,4 +1,5 @@
 // 导出DTO
+export * from './dto/search-params.dto';
 export * from './dto/pagination-params.dto';
 export * from './dto/pagination-result.dto';
 

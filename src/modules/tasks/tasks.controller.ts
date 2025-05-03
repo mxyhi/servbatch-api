@@ -28,6 +28,7 @@ import {
   PaginationParamsDto,
   ParsePaginationPipe,
 } from '../../common';
+import { TaskQueryDto } from './dto/task-query.dto';
 
 @ApiTags('tasks')
 @ApiBearerAuth()
@@ -48,7 +49,7 @@ export class TasksController {
   @Get()
   @ApiOperation({ summary: '分页获取任务列表' })
   @ApiQuery({
-    type: PaginationParamsDto,
+    type: TaskQueryDto,
   })
   @ApiResponse({
     status: 200,
@@ -67,7 +68,7 @@ export class TasksController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: PaginationParamsDto) {
+  findAll(@Query(ParsePaginationPipe) params: TaskQueryDto) {
     return this.tasksService.findAll(params);
   }
 

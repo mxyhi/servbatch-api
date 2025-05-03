@@ -13,11 +13,8 @@ import {
   ImportServersResultDto,
   ImportFailureServerDto,
 } from './dto/import-servers.dto';
-import {
-  PaginationResultDto,
-  PaginationParamsDto,
-  PaginationService,
-} from '../../common';
+import { PaginationResultDto, PaginationService } from '../../common';
+import { ServerQueryDto } from './dto/server-query.dto';
 
 @Injectable()
 export class ServersService {
@@ -35,13 +32,40 @@ export class ServersService {
   }
 
   async findAll(
-    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+    params: ServerQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<ServerEntity>> {
+    // 构建查询条件
+    const where: any = {};
+
+    // 处理特定字段的查询
+    if (params.name) {
+      where.name = {
+        contains: params.name,
+      };
+    }
+
+    if (params.host) {
+      where.host = {
+        contains: params.host,
+      };
+    }
+
+    if (params.status) {
+      where.status = params.status;
+    }
+
+    if (params.connectionType) {
+      where.connectionType = params.connectionType;
+    }
+
+    // 使用分页服务进行查询，并指定可搜索字段
     return this.paginationService.paginate<ServerEntity>(
       this.prisma.server,
       params,
-      {}, // where
+      where, // where
       { createdAt: 'desc' }, // orderBy
+      {}, // include
+      ['name', 'host', 'username'], // 可搜索字段（用于关键字搜索）
     );
   }
 
