@@ -8,15 +8,25 @@ import {
   Delete,
   ParseIntPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { UserQueryDto } from './dto/user-query.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { UserEntity } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { ParsePaginationPipe } from '../../common';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -34,10 +44,29 @@ export class UsersController {
   }
 
   @Get()
-  @ApiOperation({ summary: '获取所有用户' })
-  @ApiResponse({ status: 200, description: '返回所有用户', type: [UserEntity] })
-  findAll() {
-    return this.usersService.findAll();
+  @ApiOperation({ summary: '分页获取用户列表' })
+  @ApiQuery({
+    type: UserQueryDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '返回分页的用户列表',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/UserEntity' },
+            },
+          },
+        },
+      ],
+    },
+  })
+  findAll(@Query(ParsePaginationPipe) params: UserQueryDto) {
+    return this.usersService.findAll(params);
   }
 
   @Get(':id')

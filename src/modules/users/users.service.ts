@@ -7,6 +7,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
+import { UserQueryDto } from './dto/user-query.dto';
+import { PaginationResultDto, PaginationService } from '../../common';
 import * as crypto from 'crypto';
 
 // 简单的密码哈希函数，与seed.ts中的相同
@@ -16,7 +18,10 @@ function hashPassword(password: string): string {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paginationService: PaginationService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     // 检查用户名是否已存在
@@ -55,9 +60,47 @@ export class UsersService {
     return result;
   }
 
-  async findAll(): Promise<UserEntity[]> {
-    const users = await this.prisma.user.findMany();
-    return users.map(({ password, ...rest }) => rest);
+  async findAll(
+    params: UserQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<UserEntity>> {
+    // 构建查询条件
+    const where: any = {};
+
+    // 处理特定字段的查询
+    if (params.username) {
+      where.username = {
+        contains: params.username,
+      };
+    }
+
+    if (params.email) {
+      where.email = {
+        contains: params.email,
+      };
+    }
+
+    if (params.role) {
+      where.role = params.role;
+    }
+
+    if (params.isActive !== undefined) {
+      where.isActive = params.isActive;
+    }
+
+    // 使用分页服务进行查询，并指定可搜索字段
+    const result = await this.paginationService.paginate<any>(
+      this.prisma.user,
+      params,
+      where, // where
+      { createdAt: 'desc' }, // orderBy
+      {}, // include
+      ['username', 'email'], // 可搜索字段（用于关键字搜索）
+    );
+
+    // 移除密码字段
+    result.items = result.items.map(({ password, ...rest }) => rest);
+
+    return result;
   }
 
   async findOne(id: number): Promise<UserEntity> {

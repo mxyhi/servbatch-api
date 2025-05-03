@@ -4,6 +4,7 @@ import { CreateCommandMonitorDto } from './dto/create-command-monitor.dto';
 import { UpdateCommandMonitorDto } from './dto/update-command-monitor.dto';
 import { CommandMonitorEntity } from './entities/command-monitor.entity';
 import { CommandMonitorExecutionEntity } from './entities/command-monitor-execution.entity';
+import { CommandMonitorQueryDto } from './dto/command-monitor-query.dto';
 import { ServersService } from '../servers/servers.service';
 import { CleanupByDateDto } from './dto/cleanup-by-date.dto';
 import { CleanupResultDto } from './dto/cleanup-result.dto';
@@ -37,8 +38,36 @@ export class CommandMonitorsService {
     });
   }
 
-  async findAll(): Promise<CommandMonitorEntity[]> {
-    return this.prisma.commandMonitor.findMany();
+  async findAll(
+    params: CommandMonitorQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<CommandMonitorEntity>> {
+    // 构建查询条件
+    const where: any = {};
+
+    // 处理特定字段的查询
+    if (params.name) {
+      where.name = {
+        contains: params.name,
+      };
+    }
+
+    if (params.enabled !== undefined) {
+      where.enabled = params.enabled;
+    }
+
+    if (params.serverId) {
+      where.serverId = params.serverId;
+    }
+
+    // 使用分页服务进行查询，并指定可搜索字段
+    return this.paginationService.paginate<CommandMonitorEntity>(
+      this.prisma.commandMonitor,
+      params,
+      where, // where
+      { createdAt: 'desc' }, // orderBy
+      {}, // include
+      ['name', 'description', 'checkCommand', 'executeCommand'], // 可搜索字段（用于关键字搜索）
+    );
   }
 
   async findOne(id: number): Promise<CommandMonitorEntity> {

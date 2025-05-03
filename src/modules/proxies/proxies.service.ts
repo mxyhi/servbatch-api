@@ -7,8 +7,10 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProxyDto } from './dto/create-proxy.dto';
 import { UpdateProxyDto } from './dto/update-proxy.dto';
+import { ProxyQueryDto } from './dto/proxy-query.dto';
 import { ProxyEntity } from './entities/proxy.entity';
 import { ProxyGateway } from '../proxy/proxy.gateway';
+import { PaginationResultDto, PaginationService } from '../../common';
 
 @Injectable()
 export class ProxiesService {
@@ -17,6 +19,7 @@ export class ProxiesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly proxyGateway: ProxyGateway,
+    private readonly paginationService: PaginationService,
   ) {}
 
   async create(createProxyDto: CreateProxyDto): Promise<ProxyEntity> {
@@ -34,14 +37,40 @@ export class ProxiesService {
     });
   }
 
-  async findAll(): Promise<ProxyEntity[]> {
-    const proxies = await this.prisma.proxy.findMany();
+  async findAll(
+    params: ProxyQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<ProxyEntity>> {
+    // 构建查询条件
+    const where: any = {};
+
+    // 处理特定字段的查询
+    if (params.id) {
+      where.id = params.id;
+    }
+
+    if (params.name) {
+      where.name = {
+        contains: params.name,
+      };
+    }
+
+    // 使用分页服务进行查询，并指定可搜索字段
+    const result = await this.paginationService.paginate<ProxyEntity>(
+      this.prisma.proxy,
+      params,
+      where, // where
+      { createdAt: 'desc' }, // orderBy
+      {}, // include
+      ['id', 'name', 'description'], // 可搜索字段（用于关键字搜索）
+    );
 
     // 添加在线状态
-    return proxies.map((proxy) => ({
+    result.items = result.items.map((proxy) => ({
       ...proxy,
       status: this.proxyGateway.isProxyOnline(proxy.id) ? 'online' : 'offline',
     }));
+
+    return result;
   }
 
   async findOne(id: string): Promise<ProxyEntity> {
@@ -106,20 +135,45 @@ export class ProxiesService {
   }
 
   // 获取所有在线代理
-  async getOnlineProxies(): Promise<ProxyEntity[]> {
+  async getOnlineProxies(
+    params: ProxyQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<ProxyEntity>> {
     const onlineProxyIds = this.proxyGateway.getOnlineProxies();
-    const proxies = await this.prisma.proxy.findMany({
-      where: {
-        id: {
-          in: onlineProxyIds,
-        },
+
+    // 构建查询条件
+    const where: any = {
+      id: {
+        in: onlineProxyIds,
       },
-    });
+    };
+
+    // 处理特定字段的查询
+    if (params.id) {
+      where.id = params.id; // 这会覆盖上面的 in 条件，但这是合理的，因为如果指定了具体ID，就不需要 in 条件了
+    }
+
+    if (params.name) {
+      where.name = {
+        contains: params.name,
+      };
+    }
+
+    // 使用分页服务进行查询，并指定可搜索字段
+    const result = await this.paginationService.paginate<ProxyEntity>(
+      this.prisma.proxy,
+      params,
+      where, // where
+      { createdAt: 'desc' }, // orderBy
+      {}, // include
+      ['id', 'name', 'description'], // 可搜索字段（用于关键字搜索）
+    );
 
     // 添加在线状态
-    return proxies.map((proxy) => ({
+    result.items = result.items.map((proxy) => ({
       ...proxy,
-      status: 'online',
+      status: 'online', // 这里已经确定是在线的
     }));
+
+    return result;
   }
 }

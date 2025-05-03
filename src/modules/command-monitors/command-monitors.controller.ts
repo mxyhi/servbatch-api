@@ -12,6 +12,7 @@ import {
 import { CommandMonitorsService } from './command-monitors.service';
 import { CreateCommandMonitorDto } from './dto/create-command-monitor.dto';
 import { UpdateCommandMonitorDto } from './dto/update-command-monitor.dto';
+import { CommandMonitorQueryDto } from './dto/command-monitor-query.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -51,14 +52,29 @@ export class CommandMonitorsController {
   }
 
   @Get()
-  @ApiOperation({ summary: '获取所有命令监控' })
+  @ApiOperation({ summary: '分页获取命令监控列表' })
+  @ApiQuery({
+    type: CommandMonitorQueryDto,
+  })
   @ApiResponse({
     status: 200,
-    description: '返回所有命令监控列表',
-    type: [CommandMonitorEntity],
+    description: '返回分页的命令监控列表',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/CommandMonitorEntity' },
+            },
+          },
+        },
+      ],
+    },
   })
-  findAll() {
-    return this.commandMonitorsService.findAll();
+  findAll(@Query(ParsePaginationPipe) params: CommandMonitorQueryDto) {
+    return this.commandMonitorsService.findAll(params);
   }
 
   @Get(':id')

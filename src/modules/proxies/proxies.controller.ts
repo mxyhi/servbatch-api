@@ -6,18 +6,22 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProxiesService } from './proxies.service';
 import { CreateProxyDto } from './dto/create-proxy.dto';
 import { UpdateProxyDto } from './dto/update-proxy.dto';
+import { ProxyQueryDto } from './dto/proxy-query.dto';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProxyEntity } from './entities/proxy.entity';
+import { ParsePaginationPipe, PaginationResultDto } from '../../common';
 
 @ApiTags('proxies')
 @ApiBearerAuth()
@@ -37,25 +41,55 @@ export class ProxiesController {
   }
 
   @Get()
-  @ApiOperation({ summary: '获取所有代理' })
+  @ApiOperation({ summary: '分页获取代理列表' })
+  @ApiQuery({
+    type: ProxyQueryDto,
+  })
   @ApiResponse({
     status: 200,
-    description: '返回所有代理列表',
-    type: [ProxyEntity],
+    description: '返回分页的代理列表',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/ProxyEntity' },
+            },
+          },
+        },
+      ],
+    },
   })
-  findAll() {
-    return this.proxiesService.findAll();
+  findAll(@Query(ParsePaginationPipe) params: ProxyQueryDto) {
+    return this.proxiesService.findAll(params);
   }
 
   @Get('online')
-  @ApiOperation({ summary: '获取所有在线代理' })
+  @ApiOperation({ summary: '分页获取所有在线代理' })
+  @ApiQuery({
+    type: ProxyQueryDto,
+  })
   @ApiResponse({
     status: 200,
-    description: '返回所有在线代理列表',
-    type: [ProxyEntity],
+    description: '返回分页的在线代理列表',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/ProxyEntity' },
+            },
+          },
+        },
+      ],
+    },
   })
-  getOnlineProxies() {
-    return this.proxiesService.getOnlineProxies();
+  getOnlineProxies(@Query(ParsePaginationPipe) params: ProxyQueryDto) {
+    return this.proxiesService.getOnlineProxies(params);
   }
 
   @Get(':id')
