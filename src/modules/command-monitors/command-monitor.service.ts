@@ -66,9 +66,6 @@ export class CommandMonitorService {
               `服务器 ${monitor.serverId} 上的命令监控 "${monitor.name}" 执行完成，退出码: ${executeExitCode}`,
             );
           } else {
-            this.logger.debug(
-              `服务器 ${monitor.serverId} 上的命令监控 "${monitor.name}" 检测到命令正在运行，无需执行`,
-            );
           }
 
           // 记录执行结果

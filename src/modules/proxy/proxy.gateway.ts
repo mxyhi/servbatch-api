@@ -75,25 +75,101 @@ export class ProxyGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('command_result')
   handleCommandResult(_client: Socket, payload: any): WsResponse<any> {
-    this.logger.debug(`收到命令执行结果: ${JSON.stringify(payload)}`);
+    if (!payload || !payload.commandId) {
+      this.logger.error('收到的命令执行结果缺少commandId');
+      return {
+        event: 'command_result_received',
+        data: { success: false, error: '缺少commandId' },
+      };
+    }
 
-    // 通过事件发射器通知等待结果的服务
-    this.eventEmitter.emit('command_result', payload);
+    // 只发送到特定的命令结果事件，供 sendCommand 中的 Promise 监听
+    const specificEvent = `command_result_${payload.commandId}`;
+    // 发送包含 stdout, stderr, exitCode 的完整 result 对象
+    this.eventEmitter.emit(specificEvent, payload.result);
 
     return { event: 'command_result_received', data: { success: true } };
   }
 
-  // 发送命令到特定的代理
-  async sendCommand(proxyId: string, command: any): Promise<boolean> {
+  // 发送命令到特定的代理，并返回一个包含结果的 Promise
+  async sendCommand(
+    proxyId: string,
+    command: {
+      commandId: string;
+      timeout?: number;
+      [key: string]: any; // 其他命令参数
+    },
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const client = this.proxyClients.get(proxyId);
     if (!client) {
-      this.logger.error(`代理 ${proxyId} 未连接`);
-      return false;
+      this.logger.error(`[sendCommand] 代理 ${proxyId} 未连接`);
+      throw new Error(`代理 ${proxyId} 未连接`);
     }
 
-    this.logger.debug(`向代理 ${proxyId} 发送命令: ${JSON.stringify(command)}`);
-    client.emit('execute_command', command);
-    return true;
+    const commandId = command.commandId;
+    const maxWaitTime = command.timeout || 30000; // 默认30秒超时
+    const eventName = `command_result_${commandId}`;
+
+    return new Promise((resolve, reject) => {
+      let timeoutId: NodeJS.Timeout | null = null;
+      let listener: ((result: any) => void) | null = null;
+
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        if (listener) {
+          this.eventEmitter.off(eventName, listener);
+          listener = null;
+        }
+      };
+
+      timeoutId = setTimeout(() => {
+        this.logger.warn(
+          `[sendCommand] 命令 ${commandId} 在网关等待结果超时 (${maxWaitTime}ms)`,
+        );
+        cleanup();
+        reject(new Error(`命令执行超时 (${maxWaitTime}ms)`));
+      }, maxWaitTime);
+
+      listener = (result) => {
+        this.logger.log(
+          `[sendCommand] 监听到命令 ${commandId} 的结果: ${JSON.stringify(result)}`,
+        );
+        cleanup();
+        // 确保返回的对象结构符合 Promise 类型定义
+        if (
+          typeof result === 'object' &&
+          result !== null &&
+          'stdout' in result &&
+          'stderr' in result &&
+          'exitCode' in result
+        ) {
+          resolve(result);
+        } else {
+          this.logger.error(
+            `[sendCommand] 命令 ${commandId} 返回的结果格式不正确: ${JSON.stringify(result)}`,
+          );
+          reject(new Error('命令返回结果格式不正确'));
+        }
+      };
+
+      this.eventEmitter.on(eventName, listener);
+
+      // 发送命令到代理客户端
+      client.emit('execute_command', command, (ack) => {
+        // 可选：处理客户端的确认回执
+        if (ack && ack.error) {
+          this.logger.error(
+            `[sendCommand] 代理 ${proxyId} 确认接收命令 ${commandId} 时出错: ${ack.error}`,
+          );
+          cleanup();
+          reject(new Error(`代理端执行命令出错: ${ack.error}`));
+        } else {
+        }
+      });
+    });
   }
 
   // 检查代理是否在线
