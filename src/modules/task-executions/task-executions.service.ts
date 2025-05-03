@@ -15,6 +15,9 @@ import {
   PaginationResultDto,
   PaginationParamsDto,
   PaginationService,
+  CleanupUtil,
+  buildDateRangeFilter,
+  ErrorHandler,
 } from '../../common';
 
 @Injectable()
@@ -139,41 +142,18 @@ export class TaskExecutionsService {
    * @returns 清理结果
    */
   async cleanupByDate(cleanupDto: CleanupByDateDto): Promise<CleanupResultDto> {
-    try {
-      const { startDate, endDate } = cleanupDto;
-      const where: any = {};
+    const { startDate, endDate } = cleanupDto;
 
-      // 构建日期条件
-      if (startDate || endDate) {
-        where.createdAt = {};
-        if (startDate) {
-          where.createdAt.gte = startDate;
-        }
-        if (endDate) {
-          where.createdAt.lte = endDate;
-        }
-      }
-
-      // 执行删除操作
-      const { count } = await this.prisma.taskExecution.deleteMany({
-        where,
-      });
-
-      this.logger.log(`已清理 ${count} 条任务执行历史记录`);
-
-      return {
-        deletedCount: count,
-        success: true,
-        message: `已成功清理 ${count} 条任务执行历史记录`,
-      };
-    } catch (error) {
-      this.logger.error(`清理任务执行历史记录失败: ${error.message}`);
-      return {
-        deletedCount: 0,
-        success: false,
-        message: `清理失败: ${error.message}`,
-      };
-    }
+    return CleanupUtil.cleanupByDateRange(
+      this.prisma,
+      'taskExecution',
+      'createdAt',
+      startDate,
+      endDate,
+      {},
+      this.logger,
+      '任务执行历史记录',
+    );
   }
 
   /**
@@ -206,11 +186,16 @@ export class TaskExecutionsService {
         message: `已成功清理 ${count} 条状态为 ${statuses.join(', ')} 的任务执行历史记录`,
       };
     } catch (error) {
-      this.logger.error(`清理任务执行历史记录失败: ${error.message}`);
+      const err = ErrorHandler.handleError(
+        this.logger,
+        error,
+        '清理任务执行历史记录失败',
+      );
+
       return {
         deletedCount: 0,
         success: false,
-        message: `清理失败: ${error.message}`,
+        message: `清理失败: ${err.message}`,
       };
     }
   }

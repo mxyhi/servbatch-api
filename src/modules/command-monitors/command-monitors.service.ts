@@ -11,6 +11,9 @@ import {
   PaginationResultDto,
   PaginationParamsDto,
   PaginationService,
+  CleanupUtil,
+  buildDateRangeFilter,
+  ErrorHandler,
 } from '../../common';
 
 @Injectable()
@@ -128,41 +131,28 @@ export class CommandMonitorsService {
       await this.findOne(monitorId);
 
       const { startDate, endDate } = cleanupDto;
-      const where: any = { monitorId };
 
-      // 构建日期条件
-      if (startDate || endDate) {
-        where.executedAt = {};
-        if (startDate) {
-          where.executedAt.gte = startDate;
-        }
-        if (endDate) {
-          where.executedAt.lte = endDate;
-        }
-      }
-
-      // 执行删除操作
-      const { count } = await this.prisma.commandMonitorExecution.deleteMany({
-        where,
-      });
-
-      this.logger.log(
-        `已清理命令监控ID ${monitorId} 的 ${count} 条执行历史记录`,
+      return CleanupUtil.cleanupByDateRange(
+        this.prisma,
+        'commandMonitorExecution',
+        'executedAt',
+        startDate,
+        endDate,
+        { monitorId },
+        this.logger,
+        `命令监控ID ${monitorId} 的执行历史记录`,
       );
-
-      return {
-        deletedCount: count,
-        success: true,
-        message: `已成功清理命令监控ID ${monitorId} 的 ${count} 条执行历史记录`,
-      };
     } catch (error) {
-      this.logger.error(
-        `清理命令监控ID ${monitorId} 的执行历史记录失败: ${error.message}`,
+      const err = ErrorHandler.handleError(
+        this.logger,
+        error,
+        `清理命令监控ID ${monitorId} 的执行历史记录失败`,
       );
+
       return {
         deletedCount: 0,
         success: false,
-        message: `清理失败: ${error.message}`,
+        message: `清理失败: ${err.message}`,
       };
     }
   }
@@ -189,13 +179,16 @@ export class CommandMonitorsService {
         message: `已成功清理命令监控ID ${monitorId} 的 ${count} 条执行历史记录`,
       };
     } catch (error) {
-      this.logger.error(
-        `清理命令监控ID ${monitorId} 的执行历史记录失败: ${error.message}`,
+      const err = ErrorHandler.handleError(
+        this.logger,
+        error,
+        `清理命令监控ID ${monitorId} 的执行历史记录失败`,
       );
+
       return {
         deletedCount: 0,
         success: false,
-        message: `清理失败: ${error.message}`,
+        message: `清理失败: ${err.message}`,
       };
     }
   }
@@ -207,28 +200,27 @@ export class CommandMonitorsService {
       // 验证服务器是否存在
       await this.serversService.findOne(serverId);
 
-      // 执行删除操作
-      const { count } = await this.prisma.commandMonitorExecution.deleteMany({
-        where: { serverId },
-      });
-
-      this.logger.log(
-        `已清理服务器ID ${serverId} 的 ${count} 条命令监控执行历史记录`,
+      return CleanupUtil.cleanupByDateRange(
+        this.prisma,
+        'commandMonitorExecution',
+        'executedAt',
+        undefined,
+        undefined,
+        { serverId },
+        this.logger,
+        `服务器ID ${serverId} 的命令监控执行历史记录`,
       );
-
-      return {
-        deletedCount: count,
-        success: true,
-        message: `已成功清理服务器ID ${serverId} 的 ${count} 条命令监控执行历史记录`,
-      };
     } catch (error) {
-      this.logger.error(
-        `清理服务器ID ${serverId} 的命令监控执行历史记录失败: ${error.message}`,
+      const err = ErrorHandler.handleError(
+        this.logger,
+        error,
+        `清理服务器ID ${serverId} 的命令监控执行历史记录失败`,
       );
+
       return {
         deletedCount: 0,
         success: false,
-        message: `清理失败: ${error.message}`,
+        message: `清理失败: ${err.message}`,
       };
     }
   }
