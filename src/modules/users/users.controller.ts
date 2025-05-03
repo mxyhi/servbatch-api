@@ -14,7 +14,6 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
-import { UserPaginationDto } from './dto/user-where.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -35,7 +34,7 @@ import { ParsePaginationPipe } from '../../common';
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
-@ApiExtraModels(UserPaginationDto)
+@ApiExtraModels(UserQueryDto)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -49,7 +48,7 @@ export class UsersController {
   @Get()
   @ApiOperation({ summary: '分页获取用户列表' })
   @ApiQuery({
-    type: UserPaginationDto,
+    type: UserQueryDto,
   })
   @ApiResponse({
     status: 200,
@@ -68,41 +67,8 @@ export class UsersController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: UserPaginationDto) {
-    // 如果使用了where参数，直接传递给服务层
-    if (params.where) {
-      // 处理特定字段的查询条件
-      const where: any = {};
-
-      if (params.where.username) {
-        where.username = { contains: params.where.username };
-      }
-
-      if (params.where.email) {
-        where.email = { contains: params.where.email };
-      }
-
-      if (params.where.role) {
-        where.role = params.where.role;
-      }
-
-      if (params.where.isActive !== undefined) {
-        where.isActive = params.where.isActive;
-      }
-
-      // 创建一个新的参数对象，包含分页参数和where条件
-      const queryParams = {
-        ...params,
-        username: params.where.username,
-        email: params.where.email,
-        role: params.where.role,
-        isActive: params.where.isActive,
-      };
-
-      return this.usersService.findByLimit(queryParams);
-    }
-
-    // 如果没有使用where参数，按原来的方式处理
+  findAll(@Query(ParsePaginationPipe) params: UserQueryDto) {
+    // 直接使用查询参数
     return this.usersService.findByLimit(params);
   }
 

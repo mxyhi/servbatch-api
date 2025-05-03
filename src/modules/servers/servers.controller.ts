@@ -30,12 +30,12 @@ import {
   ImportServersResultDto,
 } from './dto/import-servers.dto';
 import { ParsePaginationPipe } from '../../common';
-import { ServerPaginationDto } from './dto/server-where.dto';
+import { ServerQueryDto } from './dto/server-query.dto';
 
 @ApiTags('servers')
 @ApiBearerAuth()
 @Controller('servers')
-@ApiExtraModels(ServerPaginationDto)
+@ApiExtraModels(ServerQueryDto)
 export class ServersController {
   constructor(
     private readonly serversService: ServersService,
@@ -56,7 +56,7 @@ export class ServersController {
   @Get()
   @ApiOperation({ summary: '分页获取服务器列表' })
   @ApiQuery({
-    type: ServerPaginationDto,
+    type: ServerQueryDto,
   })
   @ApiResponse({
     status: 200,
@@ -75,41 +75,8 @@ export class ServersController {
       ],
     },
   })
-  findAll(@Query(ParsePaginationPipe) params: ServerPaginationDto) {
-    // 如果使用了where参数，直接传递给服务层
-    if (params.where) {
-      // 处理特定字段的查询条件
-      const where: any = {};
-
-      if (params.where.name) {
-        where.name = { contains: params.where.name };
-      }
-
-      if (params.where.host) {
-        where.host = { contains: params.where.host };
-      }
-
-      if (params.where.status) {
-        where.status = params.where.status;
-      }
-
-      if (params.where.connectionType) {
-        where.connectionType = params.where.connectionType;
-      }
-
-      // 创建一个新的参数对象，包含分页参数和where条件
-      const queryParams = {
-        ...params,
-        name: params.where.name,
-        host: params.where.host,
-        status: params.where.status,
-        connectionType: params.where.connectionType,
-      };
-
-      return this.serversService.findByLimit(queryParams);
-    }
-
-    // 如果没有使用where参数，按原来的方式处理
+  findAll(@Query(ParsePaginationPipe) params: ServerQueryDto) {
+    // 直接使用查询参数
     return this.serversService.findByLimit(params);
   }
 
