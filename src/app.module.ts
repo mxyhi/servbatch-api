@@ -13,9 +13,16 @@ import { CommandMonitorsModule } from './modules/command-monitors/command-monito
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { ProxiesModule } from './modules/proxies/proxies.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    // 配置模块
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     // 注册事件发射器模块
     EventEmitterModule.forRoot(),
     // 注册定时任务模块
@@ -32,6 +39,9 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     DashboardModule,
     TaskExecutionsModule,
     CommandMonitorsModule,
+    // 注册用户和认证模块
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

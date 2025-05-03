@@ -27,6 +27,9 @@ async function bootstrap() {
     .addTag('dashboard', '仪表盘')
     .addTag('proxies', '代理管理')
     .addTag('proxy-websocket', '[WS] 中介代理WebSocket接口')
+    .addTag('auth', '认证')
+    .addTag('users', '用户管理')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);

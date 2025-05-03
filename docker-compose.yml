@@ -14,6 +14,10 @@ services:
       - PORT=3000
       - DATABASE_URL=file:/app/data/servbatch.db
       - PROXY_API_KEY=${PROXY_API_KEY:-your-api-key}
+      - JWT_SECRET=servbatch-api-jwt-secret-key
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin123
+      - ADMIN_EMAIL=admin@example.com
       - TZ=Asia/Shanghai
     volumes:
       - ./data:/app/data

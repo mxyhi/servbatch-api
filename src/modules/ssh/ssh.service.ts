@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { NodeSSH, Config, SSHExecCommandOptions } from 'node-ssh';
 import { ServersService } from '../servers/servers.service';
 import { ProxyGateway } from '../proxy/proxy.gateway';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class SshService {
@@ -12,7 +11,6 @@ export class SshService {
   constructor(
     private readonly serversService: ServersService,
     private readonly proxyGateway: ProxyGateway,
-    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getConnection(serverId: number): Promise<NodeSSH> {
