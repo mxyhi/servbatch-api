@@ -171,12 +171,33 @@ export class SshService {
       timeout,
     };
 
+    // 创建一个Promise来等待命令执行结果
+    const resultPromise = new Promise<{
+      stdout: string;
+      stderr: string;
+      exitCode: number;
+    }>((resolve, reject) => {
+      const maxWaitTime = timeout || 30000; // 默认30秒超时
+      const timeoutId = setTimeout(() => {
+        this.eventEmitter.removeAllListeners(`command_result_${commandId}`);
+        reject(new Error(`命令执行超时 (${maxWaitTime}ms)`));
+      }, maxWaitTime);
+
+      // 先设置结果监听器，确保不会错过任何事件
+      this.eventEmitter.once(`command_result_${commandId}`, (result) => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      });
+    });
+
     // 发送命令到代理
     const sent = await this.proxyGateway.sendCommand(
       server.proxyId,
       commandObj,
     );
     if (!sent) {
+      // 如果发送失败，移除监听器
+      this.eventEmitter.removeAllListeners(`command_result_${commandId}`);
       return {
         stdout: '',
         stderr: `无法发送命令到代理 ${server.proxyId}`,
@@ -185,21 +206,7 @@ export class SshService {
     }
 
     // 等待命令执行结果
-    return new Promise<{ stdout: string; stderr: string; exitCode: number }>(
-      (resolve, reject) => {
-        const maxWaitTime = timeout || 30000; // 默认30秒超时
-        const timeoutId = setTimeout(() => {
-          this.eventEmitter.removeAllListeners(`command_result_${commandId}`);
-          reject(new Error(`命令执行超时 (${maxWaitTime}ms)`));
-        }, maxWaitTime);
-
-        // 设置结果监听器
-        this.eventEmitter.once(`command_result_${commandId}`, (result) => {
-          clearTimeout(timeoutId);
-          resolve(result);
-        });
-      },
-    ).catch((error) => {
+    return resultPromise.catch((error) => {
       this.logger.error(`通过代理执行命令失败: ${error.message}`);
       return {
         stdout: '',
