@@ -53,6 +53,21 @@ export class ServersController {
 
   @Get()
   @ApiOperation({ summary: '分页获取服务器列表' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: '搜索关键词（同时搜索服务器名称和IP地址）',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: '页码，从 1 开始，默认为 1',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    description: '每页数量，默认为 10',
+  })
   @ApiResponse({
     status: 200,
     description: '返回分页的服务器列表',

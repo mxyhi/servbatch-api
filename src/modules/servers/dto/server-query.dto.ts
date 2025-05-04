@@ -17,6 +17,14 @@ export class ServerQueryDto
 {
   // 添加索引签名以满足Record<string, unknown>约束
   [key: string]: unknown;
+
+  @ApiPropertyOptional({
+    description: '搜索关键词（同时搜索服务器名称和IP地址）',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({ description: '服务器名称（模糊匹配）' })
   @IsOptional()
   @IsString()

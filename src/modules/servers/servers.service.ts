@@ -51,19 +51,36 @@ export class ServersService extends BaseService<
   protected buildWhereClause(params: ServerQueryDto): any {
     const where: any = {};
 
-    // 处理特定字段的查询
-    if (params.name) {
-      where.name = {
-        contains: params.name,
-      };
+    // 处理搜索关键词（同时搜索名称和主机地址）
+    if (params.search) {
+      where.OR = [
+        {
+          name: {
+            contains: params.search,
+          },
+        },
+        {
+          host: {
+            contains: params.search,
+          },
+        },
+      ];
+    } else {
+      // 如果没有搜索关键词，则处理单独的字段查询
+      if (params.name) {
+        where.name = {
+          contains: params.name,
+        };
+      }
+
+      if (params.host) {
+        where.host = {
+          contains: params.host,
+        };
+      }
     }
 
-    if (params.host) {
-      where.host = {
-        contains: params.host,
-      };
-    }
-
+    // 这些过滤条件始终应用，无论是否有搜索关键词
     if (params.status) {
       where.status = params.status;
     }
