@@ -58,16 +58,7 @@ export class PaginationService {
    * @returns 分页结果
    */
   async paginateByLimit<T, M extends Record<string, any>>(
-    model: {
-      count: (args: { where: WhereCondition<M> }) => Promise<number>;
-      findMany: (args: {
-        where: WhereCondition<M>;
-        orderBy: OrderByCondition<M>;
-        include?: IncludeRelation<M>;
-        skip: number;
-        take: number;
-      }) => Promise<T[]>;
-    },
+    model: any,
     params: PaginationParamsDto,
     where: WhereCondition<M> = {} as WhereCondition<M>,
     orderBy: OrderByCondition<M> = {} as OrderByCondition<M>,
@@ -111,16 +102,7 @@ export class PaginationService {
    * @deprecated 请使用 paginateByLimit 方法
    */
   async paginate<T, M extends Record<string, any>>(
-    model: {
-      count: (args: { where: WhereCondition<M> }) => Promise<number>;
-      findMany: (args: {
-        where: WhereCondition<M>;
-        orderBy: OrderByCondition<M>;
-        include?: IncludeRelation<M>;
-        skip: number;
-        take: number;
-      }) => Promise<T[]>;
-    },
+    model: any,
     params: PaginationParamsDto,
     where: WhereCondition<M> = {} as WhereCondition<M>,
     orderBy: OrderByCondition<M> = {} as OrderByCondition<M>,

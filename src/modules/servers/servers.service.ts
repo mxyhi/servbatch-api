@@ -59,7 +59,7 @@ export class ServersService {
     }
 
     // 使用分页服务进行查询
-    return this.paginationService.paginateByLimit<ServerEntity>(
+    return this.paginationService.paginateByLimit<ServerEntity, any>(
       this.prisma.server,
       params,
       where, // where

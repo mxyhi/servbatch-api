@@ -1,6 +1,6 @@
 import { Injectable, PipeTransform, ArgumentMetadata } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { SortOrder } from '../dto/pagination-params.dto';
+import { SortOrder } from '../constants';
 
 /**
  * 分页参数解析管道

@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { buildDateRangeFilter, DateField } from '../types/date-range.type';
+import { buildDateRangeFilter } from '../types/date-range.type';
+import { DateFieldType } from '../constants';
 
 /**
  * 清理操作结果类型
@@ -31,7 +32,7 @@ export class CleanupUtil {
   static async cleanupByDateRange<T extends Record<string, any>>(
     prisma: PrismaClient,
     model: keyof PrismaClient,
-    dateField: DateField,
+    dateField: DateFieldType,
     startDate?: Date,
     endDate?: Date,
     additionalWhere: Record<string, any> = {},
@@ -41,21 +42,21 @@ export class CleanupUtil {
     try {
       // 构建日期范围过滤条件
       const dateFilter = buildDateRangeFilter<T>(dateField, startDate, endDate);
-      
+
       // 合并查询条件
       const where = {
         ...dateFilter,
         ...additionalWhere,
       };
-      
+
       // 执行删除操作
       const { count } = await (prisma[model] as any).deleteMany({ where });
-      
+
       // 记录日志
       if (logger) {
         logger.log(`已清理 ${count} 条${logPrefix}`);
       }
-      
+
       return {
         deletedCount: count,
         success: true,
@@ -64,9 +65,11 @@ export class CleanupUtil {
     } catch (error) {
       // 记录错误日志
       if (logger) {
-        logger.error(`清理${logPrefix}失败: ${error instanceof Error ? error.message : String(error)}`);
+        logger.error(
+          `清理${logPrefix}失败: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
-      
+
       return {
         deletedCount: 0,
         success: false,

@@ -1,16 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CleanupByDateDto } from '../dto/cleanup-by-date.dto';
-import {
-  CleanupByStatusDto,
-  TaskExecutionStatus,
-} from '../dto/cleanup-by-status.dto';
+import { CleanupByStatusDto } from '../dto/cleanup-by-status.dto';
 import { CleanupResultDto } from '../dto/cleanup-result.dto';
-import {
-  CleanupUtil,
-  ErrorHandler,
-  DateField,
-} from '../../../common';
+import { CleanupUtil, ErrorHandler, DateField } from '../../../common';
 import { TasksService } from '../../tasks/tasks.service';
 import { ServersService } from '../../servers/servers.service';
 

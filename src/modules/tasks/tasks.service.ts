@@ -41,7 +41,7 @@ export class TasksService {
     }
 
     // 使用分页服务进行查询
-    return this.paginationService.paginateByLimit<TaskEntity>(
+    return this.paginationService.paginateByLimit<TaskEntity, any>(
       this.prisma.task,
       params,
       where, // where

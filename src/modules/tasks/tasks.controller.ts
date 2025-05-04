@@ -21,7 +21,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { TaskEntity } from './entities/task.entity';
-import { TaskExecutionsService } from '../task-executions/task-executions.service';
+import { TaskExecutionsService } from '../task-executions/services/task-executions.service';
 import { CreateTaskExecutionDto } from '../task-executions/dto/create-task-execution.dto';
 import {
   PaginationResultDto,

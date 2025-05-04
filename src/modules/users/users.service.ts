@@ -88,7 +88,7 @@ export class UsersService {
     }
 
     // 使用分页服务进行查询
-    const result = await this.paginationService.paginateByLimit<any>(
+    const result = await this.paginationService.paginateByLimit<any, any>(
       this.prisma.user,
       params,
       where, // where

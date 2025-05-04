@@ -55,7 +55,10 @@ export class ProxiesService {
     }
 
     // 使用分页服务进行查询
-    const result = await this.paginationService.paginateByLimit<ProxyEntity>(
+    const result = await this.paginationService.paginateByLimit<
+      ProxyEntity,
+      any
+    >(
       this.prisma.proxy,
       params,
       where, // where
@@ -168,7 +171,10 @@ export class ProxiesService {
     }
 
     // 使用分页服务进行查询
-    const result = await this.paginationService.paginateByLimit<ProxyEntity>(
+    const result = await this.paginationService.paginateByLimit<
+      ProxyEntity,
+      any
+    >(
       this.prisma.proxy,
       params,
       where, // where

@@ -140,7 +140,7 @@ export class BaseTaskExecutionService {
     return this.paginationService.paginateByLimit<TaskExecutionEntity, any>(
       this.prisma.taskExecution,
       params,
-      { taskId }, // where
+      { taskId: { equals: taskId } }, // where
       { createdAt: 'desc' }, // orderBy
     );
   }
@@ -158,7 +158,7 @@ export class BaseTaskExecutionService {
     return this.paginationService.paginateByLimit<TaskExecutionEntity, any>(
       this.prisma.taskExecution,
       params,
-      { serverId }, // where
+      { serverId: { equals: serverId } }, // where
       { createdAt: 'desc' }, // orderBy
     );
   }
