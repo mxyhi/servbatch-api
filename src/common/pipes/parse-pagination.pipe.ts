@@ -1,5 +1,6 @@
 import { Injectable, PipeTransform, ArgumentMetadata } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
+import { SortOrder } from '../dto/pagination-params.dto';
 
 /**
  * 分页参数解析管道
@@ -29,6 +30,14 @@ export class ParsePaginationPipe implements PipeTransform {
       instance.pageSize = parseInt(instance.pageSize.toString());
     } else {
       instance.pageSize = 10;
+    }
+
+    // 验证排序参数
+    if (
+      instance.sortOrder &&
+      !Object.values(SortOrder).includes(instance.sortOrder)
+    ) {
+      instance.sortOrder = undefined;
     }
 
     return instance;

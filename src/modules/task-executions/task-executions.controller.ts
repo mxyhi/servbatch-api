@@ -13,6 +13,7 @@ import { CreateTaskExecutionDto } from './dto/create-task-execution.dto';
 import { CleanupByDateDto } from './dto/cleanup-by-date.dto';
 import { CleanupByStatusDto } from './dto/cleanup-by-status.dto';
 import { CleanupResultDto } from './dto/cleanup-result.dto';
+import { TaskExecutionQueryDto } from './dto/task-execution-query.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -61,7 +62,7 @@ export class TaskExecutionsController {
       ],
     },
   })
-  findByLimit(@Query(ParsePaginationPipe) params: PaginationParamsDto) {
+  findByLimit(@Query(ParsePaginationPipe) params: TaskExecutionQueryDto) {
     return this.taskExecutionsService.findByLimit(params);
   }
 

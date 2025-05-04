@@ -13,6 +13,7 @@ import { CommandMonitorsService } from './command-monitors.service';
 import { CreateCommandMonitorDto } from './dto/create-command-monitor.dto';
 import { UpdateCommandMonitorDto } from './dto/update-command-monitor.dto';
 import { CommandMonitorQueryDto } from './dto/command-monitor-query.dto';
+import { CommandMonitorExecutionQueryDto } from './dto/command-monitor-execution-query.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -161,7 +162,7 @@ export class CommandMonitorsController {
   })
   getExecutions(
     @Param('id', ParseIntPipe) id: number,
-    @Query(ParsePaginationPipe) params: PaginationParamsDto,
+    @Query(ParsePaginationPipe) params: CommandMonitorExecutionQueryDto,
   ) {
     return this.commandMonitorsService.getExecutions(id, params);
   }
@@ -194,5 +195,32 @@ export class CommandMonitorsController {
     @Param('serverId', ParseIntPipe) serverId: number,
   ) {
     return this.commandMonitorsService.cleanupExecutionsByServerId(serverId);
+  }
+
+  @Get('executions/all')
+  @ApiOperation({ summary: '分页获取所有命令监控执行历史' })
+  @ApiResponse({
+    status: 200,
+    description: '返回分页的所有命令监控执行历史',
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/PaginationResultDto' },
+        {
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/CommandMonitorExecutionEntity',
+              },
+            },
+          },
+        },
+      ],
+    },
+  })
+  getAllExecutions(
+    @Query(ParsePaginationPipe) params: CommandMonitorExecutionQueryDto,
+  ) {
+    return this.commandMonitorsService.getAllExecutions(params);
   }
 }

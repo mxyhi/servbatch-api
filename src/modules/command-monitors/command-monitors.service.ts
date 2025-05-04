@@ -5,14 +5,15 @@ import { UpdateCommandMonitorDto } from './dto/update-command-monitor.dto';
 import { CommandMonitorEntity } from './entities/command-monitor.entity';
 import { CommandMonitorExecutionEntity } from './entities/command-monitor-execution.entity';
 import { CommandMonitorQueryDto } from './dto/command-monitor-query.dto';
+import { CommandMonitorExecutionQueryDto } from './dto/command-monitor-execution-query.dto';
 import { ServersService } from '../servers/servers.service';
 import { CleanupByDateDto } from './dto/cleanup-by-date.dto';
 import { CleanupResultDto } from './dto/cleanup-result.dto';
 import {
   PaginationResultDto,
-  PaginationParamsDto,
   PaginationService,
   CleanupUtil,
+  buildDateRangeFilter,
   ErrorHandler,
 } from '../../common';
 
@@ -146,15 +147,36 @@ export class CommandMonitorsService {
 
   async getExecutions(
     monitorId: number,
-    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+    params: CommandMonitorExecutionQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<CommandMonitorExecutionEntity>> {
     // 验证监控是否存在
     await this.findOne(monitorId);
 
+    // 构建查询条件
+    const where: any = { monitorId };
+
+    // 处理特定字段的查询
+    if (params.serverId) {
+      where.serverId = params.serverId;
+    }
+
+    if (params.executed !== undefined) {
+      where.executed = params.executed;
+    }
+
+    // 处理日期范围查询
+    if (params.startDate || params.endDate) {
+      where.executedAt = buildDateRangeFilter(
+        'executedAt',
+        params.startDate,
+        params.endDate,
+      );
+    }
+
     return this.paginationService.paginateByLimit<CommandMonitorExecutionEntity>(
       this.prisma.commandMonitorExecution,
       params,
-      { monitorId }, // where
+      where, // where
       { executedAt: 'desc' }, // orderBy
     );
   }
@@ -288,5 +310,41 @@ export class CommandMonitorsService {
         executeExitCode,
       },
     });
+  }
+
+  async getAllExecutions(
+    params: CommandMonitorExecutionQueryDto = { page: 1, pageSize: 10 },
+  ): Promise<PaginationResultDto<CommandMonitorExecutionEntity>> {
+    // 构建查询条件
+    const where: any = {};
+
+    // 处理特定字段的查询
+    if (params.monitorId) {
+      where.monitorId = params.monitorId;
+    }
+
+    if (params.serverId) {
+      where.serverId = params.serverId;
+    }
+
+    if (params.executed !== undefined) {
+      where.executed = params.executed;
+    }
+
+    // 处理日期范围查询
+    if (params.startDate || params.endDate) {
+      where.executedAt = buildDateRangeFilter(
+        'executedAt',
+        params.startDate,
+        params.endDate,
+      );
+    }
+
+    return this.paginationService.paginateByLimit<CommandMonitorExecutionEntity>(
+      this.prisma.commandMonitorExecution,
+      params,
+      where, // where
+      { executedAt: 'desc' }, // orderBy
+    );
   }
 }

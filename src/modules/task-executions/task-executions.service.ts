@@ -8,6 +8,7 @@ import {
   TaskExecutionStatus,
 } from './dto/cleanup-by-status.dto';
 import { CleanupResultDto } from './dto/cleanup-result.dto';
+import { TaskExecutionQueryDto } from './dto/task-execution-query.dto';
 import { TasksService } from '../tasks/tasks.service';
 import { ServersService } from '../servers/servers.service';
 import { QueueService } from '../queue/queue.service';
@@ -57,12 +58,37 @@ export class TaskExecutionsService {
   }
 
   async findByLimit(
-    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+    params: TaskExecutionQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<TaskExecutionEntity>> {
+    // 构建查询条件
+    const where: any = {};
+
+    // 处理特定字段的查询
+    if (params.taskId) {
+      where.taskId = params.taskId;
+    }
+
+    if (params.serverId) {
+      where.serverId = params.serverId;
+    }
+
+    if (params.status) {
+      where.status = params.status;
+    }
+
+    // 处理日期范围查询
+    if (params.startDate || params.endDate) {
+      where.createdAt = buildDateRangeFilter(
+        'createdAt',
+        params.startDate,
+        params.endDate,
+      );
+    }
+
     return this.paginationService.paginateByLimit<TaskExecutionEntity>(
       this.prisma.taskExecution,
       params,
-      {}, // where
+      where, // where
       { createdAt: 'desc' }, // orderBy
     );
   }
@@ -72,7 +98,7 @@ export class TaskExecutionsService {
    * @deprecated 请使用 findByLimit 方法
    */
   async findAll(
-    params: PaginationParamsDto = { page: 1, pageSize: 10 },
+    params: TaskExecutionQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<TaskExecutionEntity>> {
     return this.findByLimit(params);
   }

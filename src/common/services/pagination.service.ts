@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PaginationParamsDto } from '../dto/pagination-params.dto';
+import { PaginationParamsDto, SortOrder } from '../dto/pagination-params.dto';
 import { PaginationResultDto } from '../dto/pagination-result.dto';
 
 /**
@@ -8,15 +8,6 @@ import { PaginationResultDto } from '../dto/pagination-result.dto';
  */
 @Injectable()
 export class PaginationService {
-  /**
-   * 通用分页方法
-   * @param model Prisma模型
-   * @param params 分页参数
-   * @param where 查询条件
-   * @param orderBy 排序条件
-   * @param include 关联查询
-   * @returns 分页结果
-   */
   /**
    * 构建查询条件
    * @param additionalWhere 额外的查询条件
@@ -28,11 +19,33 @@ export class PaginationService {
   }
 
   /**
+   * 构建排序条件
+   * @param params 分页参数
+   * @param defaultOrderBy 默认排序条件
+   * @returns 构建的排序条件
+   */
+  buildOrderByClause(
+    params: PaginationParamsDto,
+    defaultOrderBy: any = {},
+  ): any {
+    // 如果没有指定排序字段，使用默认排序
+    if (!params.sortField) {
+      return defaultOrderBy;
+    }
+
+    // 构建排序条件
+    const orderBy = {};
+    orderBy[params.sortField] =
+      params.sortOrder === SortOrder.ASCEND ? 'asc' : 'desc';
+    return orderBy;
+  }
+
+  /**
    * 通用分页查询方法
    * @param model Prisma模型
    * @param params 分页参数
    * @param where 查询条件
-   * @param orderBy 排序条件
+   * @param orderBy 默认排序条件
    * @param include 关联查询
    * @returns 分页结果
    */
@@ -51,11 +64,14 @@ export class PaginationService {
     // 构建查询条件
     const whereClause = this.buildWhereClause(where);
 
+    // 构建排序条件
+    const orderByClause = this.buildOrderByClause(params, orderBy);
+
     const [total, items] = await Promise.all([
       model.count({ where: whereClause }),
       model.findMany({
         where: whereClause,
-        orderBy,
+        orderBy: orderByClause,
         include,
         skip,
         take: pageSize,
