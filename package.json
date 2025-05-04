@@ -26,8 +26,7 @@
     "prisma:format": "prisma format",
     "prisma:reset": "prisma migrate reset",
     "prisma:dev": "prisma migrate dev && prisma generate",
-    "prisma:deploy": "prisma migrate deploy && prisma generate",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:deploy": "prisma migrate deploy && prisma generate"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -106,8 +105,5 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
   }
 }

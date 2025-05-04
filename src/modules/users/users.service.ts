@@ -2,7 +2,10 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  OnModuleInit, // 添加 OnModuleInit
+  Logger, // 添加 Logger
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config'; // 添加 ConfigService
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,11 +20,72 @@ function hashPassword(password: string): string {
 }
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
+  // 实现 OnModuleInit
+  private readonly logger = new Logger(UsersService.name); // 初始化 Logger
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly paginationService: PaginationService,
+    private readonly configService: ConfigService, // 注入 ConfigService
   ) {}
+
+  async onModuleInit() {
+    this.logger.log(
+      'Initializing UsersService - Checking for default admin user...',
+    );
+    await this.createDefaultAdminUser();
+  }
+
+  private async createDefaultAdminUser(): Promise<void> {
+    try {
+      const adminExists = await this.prisma.user.findFirst({
+        where: { role: 'admin' },
+      });
+
+      if (!adminExists) {
+        this.logger.log(
+          'Default admin user not found. Attempting to create...',
+        );
+
+        const username = this.configService.get<string>('ADMIN_USERNAME');
+        const password = this.configService.get<string>('ADMIN_PASSWORD');
+        const email = this.configService.get<string>('ADMIN_EMAIL');
+
+        if (!username || !password || !email) {
+          this.logger.error(
+            'Missing required environment variables for default admin user (ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_EMAIL). Cannot create default admin.',
+          );
+          // 根据需要，可以选择抛出错误或仅记录日志
+          // throw new Error('Missing required environment variables for default admin user.');
+          return; // 如果不希望阻止应用启动，则返回
+        }
+
+        const hashedPassword = hashPassword(password);
+
+        await this.prisma.user.create({
+          data: {
+            username,
+            password: hashedPassword,
+            email,
+            role: 'admin',
+            isActive: true, // 默认激活
+          },
+        });
+
+        this.logger.log(
+          `Default admin user '${username}' created successfully.`,
+        );
+      } else {
+        this.logger.log(
+          'Default admin user already exists. Skipping creation.',
+        );
+      }
+    } catch (error) {
+      this.logger.error('Error during default admin user creation:', error);
+      // 根据需要处理错误，例如重新抛出或记录更详细的信息
+    }
+  }
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     // 检查用户名是否已存在
