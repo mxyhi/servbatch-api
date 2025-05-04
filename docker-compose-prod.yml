@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: https://github.com/mxyhi/servbatch-api.git
     container_name: servbatch-api
     restart: unless-stopped
     ports:
