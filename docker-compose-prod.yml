@@ -19,7 +19,6 @@ services:
       - TZ=Asia/Shanghai
     volumes:
       - ./data:/app/data
-      - ./prisma/migrations:/app/prisma/migrations
     healthcheck:
       test:
         [
