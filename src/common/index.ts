@@ -19,6 +19,7 @@ export * from './types/utility-types';
 // 导出工具
 export * from './utils/error-handler.util';
 export * from './utils/cleanup.util';
+export * from './utils/loop-run.util';
 
 // 导出模块
 export * from './common.module';

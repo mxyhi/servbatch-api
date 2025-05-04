@@ -9,6 +9,7 @@ import { Interval } from '@nestjs/schedule';
 import { SshService } from '../ssh/ssh.service';
 import { TasksService } from '../tasks/tasks.service';
 import { QueueStats } from './types/queue.types';
+import { loopRun } from '../../common/utils/loop-run.util';
 
 // 缓存条目接口
 interface CacheEntry<T> {
@@ -30,6 +31,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   private readonly cacheTTL = 30000; // 缓存有效期，30秒
   private readonly statsUpdateInterval = 10000; // 统计信息更新间隔，10秒
   private lastStatsUpdate = 0; // 上次统计更新时间
+  private stopStatsUpdate: (() => void) | null = null; // 停止统计更新的函数
 
   constructor(
     private readonly prisma: PrismaService,
@@ -44,11 +46,21 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       data: { status: 'waiting' },
     });
 
-    // 定期更新队列统计信息
-    setInterval(() => this.updateQueueStats(), this.statsUpdateInterval);
+    // 使用loopRun启动定期更新队列统计信息
+    this.stopStatsUpdate = loopRun(() => this.updateQueueStats(), {
+      interval: this.statsUpdateInterval,
+      taskName: '队列统计更新',
+      logger: this.logger,
+      continueOnError: true,
+    });
   }
 
   async onModuleDestroy() {
+    // 停止统计更新
+    if (this.stopStatsUpdate) {
+      this.stopStatsUpdate();
+    }
+
     // 关闭所有SSH连接
     await this.sshService.closeAllConnections();
   }
