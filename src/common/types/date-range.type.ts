@@ -1,3 +1,5 @@
+import { DateFieldType, DateField } from '../constants';
+
 /**
  * 日期范围过滤器类型
  * 用于构建基于日期范围的数据库查询条件
@@ -8,12 +10,6 @@ export interface DateRangeFilter {
 }
 
 /**
- * 日期字段类型
- * 用于指定日期范围过滤器应用的字段
- */
-export type DateField = 'createdAt' | 'updatedAt' | 'executedAt' | 'startedAt' | 'completedAt';
-
-/**
  * 构建日期范围查询条件
  * @param field 日期字段名
  * @param startDate 开始日期
@@ -21,7 +17,7 @@ export type DateField = 'createdAt' | 'updatedAt' | 'executedAt' | 'startedAt' |
  * @returns 构建的查询条件对象
  */
 export function buildDateRangeFilter<T extends Record<string, any>>(
-  field: DateField,
+  field: DateFieldType,
   startDate?: Date,
   endDate?: Date,
 ): Partial<T> {
@@ -29,7 +25,7 @@ export function buildDateRangeFilter<T extends Record<string, any>>(
     return {} as Partial<T>;
   }
 
-  const filter: Record<string, any> = {};
+  const filter = {} as Record<string, DateRangeFilter>;
   const dateFilter: DateRangeFilter = {};
 
   if (startDate) {

@@ -8,7 +8,7 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
-import { TaskExecutionsService } from './task-executions.service';
+import { TaskExecutionsService } from './services/task-executions.service';
 import { CreateTaskExecutionDto } from './dto/create-task-execution.dto';
 import { CleanupByDateDto } from './dto/cleanup-by-date.dto';
 import { CleanupByStatusDto } from './dto/cleanup-by-status.dto';

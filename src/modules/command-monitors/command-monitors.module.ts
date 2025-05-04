@@ -1,5 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { CommandMonitorsService } from './command-monitors.service';
+import { CommandMonitorsService } from './services/command-monitors.service';
+import { BaseCommandMonitorService } from './services/base-command-monitor.service';
+import { ExecutionService } from './services/execution.service';
 import { CommandMonitorsController } from './command-monitors.controller';
 import { CommandMonitorService } from './command-monitor.service';
 import { SshModule } from '../ssh/ssh.module';
@@ -13,7 +15,12 @@ import { CommonModule } from '../../common';
     CommonModule,
   ],
   controllers: [CommandMonitorsController],
-  providers: [CommandMonitorsService, CommandMonitorService],
+  providers: [
+    BaseCommandMonitorService,
+    ExecutionService,
+    CommandMonitorsService,
+    CommandMonitorService,
+  ],
   exports: [CommandMonitorsService],
 })
 export class CommandMonitorsModule {}

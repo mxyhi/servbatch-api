@@ -1,156 +1,47 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { CreateCommandMonitorDto } from './dto/create-command-monitor.dto';
-import { UpdateCommandMonitorDto } from './dto/update-command-monitor.dto';
-import { CommandMonitorEntity } from './entities/command-monitor.entity';
-import { CommandMonitorExecutionEntity } from './entities/command-monitor-execution.entity';
-import { CommandMonitorQueryDto } from './dto/command-monitor-query.dto';
-import { CommandMonitorExecutionQueryDto } from './dto/command-monitor-execution-query.dto';
-import { ServersService } from '../servers/servers.service';
-import { CleanupByDateDto } from './dto/cleanup-by-date.dto';
-import { CleanupResultDto } from './dto/cleanup-result.dto';
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { CommandMonitorExecutionEntity } from '../entities/command-monitor-execution.entity';
+import { CommandMonitorExecutionQueryDto } from '../dto/command-monitor-execution-query.dto';
+import { CleanupByDateDto } from '../dto/cleanup-by-date.dto';
+import { CleanupResultDto } from '../dto/cleanup-result.dto';
 import {
   PaginationResultDto,
   PaginationService,
   CleanupUtil,
   buildDateRangeFilter,
   ErrorHandler,
-} from '../../common';
+  DateField,
+} from '../../../common';
+import { BaseCommandMonitorService } from './base-command-monitor.service';
+import { ServersService } from '../../servers/servers.service';
 
+/**
+ * 命令监控执行记录服务
+ * 提供执行记录的管理功能
+ */
 @Injectable()
-export class CommandMonitorsService {
-  private readonly logger = new Logger(CommandMonitorsService.name);
+export class ExecutionService {
+  private readonly logger = new Logger(ExecutionService.name);
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly serversService: ServersService,
     private readonly paginationService: PaginationService,
+    private readonly baseService: BaseCommandMonitorService,
+    private readonly serversService: ServersService,
   ) {}
 
-  async create(
-    createCommandMonitorDto: CreateCommandMonitorDto,
-  ): Promise<CommandMonitorEntity> {
-    // 验证服务器是否存在
-    await this.serversService.findOne(createCommandMonitorDto.serverId);
-
-    return this.prisma.commandMonitor.create({
-      data: createCommandMonitorDto,
-    });
-  }
-
-  async findByLimit(
-    params: CommandMonitorQueryDto = { page: 1, pageSize: 10 },
-  ): Promise<PaginationResultDto<CommandMonitorEntity>> {
-    // 构建查询条件
-    const where: any = {};
-
-    // 处理特定字段的查询
-    if (params.name) {
-      where.name = {
-        contains: params.name,
-      };
-    }
-
-    if (params.enabled !== undefined) {
-      where.enabled = params.enabled;
-    }
-
-    if (params.serverId) {
-      where.serverId = params.serverId;
-    }
-
-    // 使用分页服务进行查询
-    return this.paginationService.paginateByLimit<CommandMonitorEntity>(
-      this.prisma.commandMonitor,
-      params,
-      where, // where
-      { createdAt: 'desc' }, // orderBy
-      {}, // include
-    );
-  }
-
   /**
-   * 分页获取命令监控列表（别名，保持向后兼容）
-   * @deprecated 请使用 findByLimit 方法
+   * 获取特定监控的执行记录
+   * @param monitorId 监控ID
+   * @param params 查询参数
+   * @returns 分页结果
    */
-  async findAll(
-    params: CommandMonitorQueryDto = { page: 1, pageSize: 10 },
-  ): Promise<PaginationResultDto<CommandMonitorEntity>> {
-    return this.findByLimit(params);
-  }
-
-  async findOne(id: number): Promise<CommandMonitorEntity> {
-    const monitor = await this.prisma.commandMonitor.findUnique({
-      where: { id },
-    });
-
-    if (!monitor) {
-      throw new NotFoundException(`命令监控ID ${id} 不存在`);
-    }
-
-    return monitor;
-  }
-
-  async update(
-    id: number,
-    updateCommandMonitorDto: UpdateCommandMonitorDto,
-  ): Promise<CommandMonitorEntity> {
-    try {
-      // 如果更新了服务器ID，验证服务器是否存在
-      if (updateCommandMonitorDto.serverId) {
-        await this.serversService.findOne(updateCommandMonitorDto.serverId);
-      }
-
-      return await this.prisma.commandMonitor.update({
-        where: { id },
-        data: updateCommandMonitorDto,
-      });
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new NotFoundException(`命令监控ID ${id} 不存在`);
-    }
-  }
-
-  async remove(id: number): Promise<CommandMonitorEntity> {
-    try {
-      return await this.prisma.commandMonitor.delete({
-        where: { id },
-      });
-    } catch (error) {
-      throw new NotFoundException(`命令监控ID ${id} 不存在`);
-    }
-  }
-
-  async enable(id: number): Promise<CommandMonitorEntity> {
-    try {
-      return await this.prisma.commandMonitor.update({
-        where: { id },
-        data: { enabled: true },
-      });
-    } catch (error) {
-      throw new NotFoundException(`命令监控ID ${id} 不存在`);
-    }
-  }
-
-  async disable(id: number): Promise<CommandMonitorEntity> {
-    try {
-      return await this.prisma.commandMonitor.update({
-        where: { id },
-        data: { enabled: false },
-      });
-    } catch (error) {
-      throw new NotFoundException(`命令监控ID ${id} 不存在`);
-    }
-  }
-
   async getExecutions(
     monitorId: number,
     params: CommandMonitorExecutionQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<CommandMonitorExecutionEntity>> {
     // 验证监控是否存在
-    await this.findOne(monitorId);
+    await this.baseService.findOne(monitorId);
 
     // 构建查询条件
     const where: any = { monitorId };
@@ -167,13 +58,13 @@ export class CommandMonitorsService {
     // 处理日期范围查询
     if (params.startDate || params.endDate) {
       where.executedAt = buildDateRangeFilter(
-        'executedAt',
+        DateField.EXECUTED_AT,
         params.startDate,
         params.endDate,
       );
     }
 
-    return this.paginationService.paginateByLimit<CommandMonitorExecutionEntity>(
+    return this.paginationService.paginateByLimit<CommandMonitorExecutionEntity, any>(
       this.prisma.commandMonitorExecution,
       params,
       where, // where
@@ -181,20 +72,26 @@ export class CommandMonitorsService {
     );
   }
 
+  /**
+   * 根据日期清理执行记录
+   * @param monitorId 监控ID
+   * @param cleanupDto 清理参数
+   * @returns 清理结果
+   */
   async cleanupExecutionsByDate(
     monitorId: number,
     cleanupDto: CleanupByDateDto,
   ): Promise<CleanupResultDto> {
     try {
       // 验证监控是否存在
-      await this.findOne(monitorId);
+      await this.baseService.findOne(monitorId);
 
       const { startDate, endDate } = cleanupDto;
 
       return CleanupUtil.cleanupByDateRange(
         this.prisma,
         'commandMonitorExecution',
-        'executedAt',
+        DateField.EXECUTED_AT,
         startDate,
         endDate,
         { monitorId },
@@ -216,12 +113,17 @@ export class CommandMonitorsService {
     }
   }
 
+  /**
+   * 清理特定监控的所有执行记录
+   * @param monitorId 监控ID
+   * @returns 清理结果
+   */
   async cleanupExecutionsByMonitorId(
     monitorId: number,
   ): Promise<CleanupResultDto> {
     try {
       // 验证监控是否存在
-      await this.findOne(monitorId);
+      await this.baseService.findOne(monitorId);
 
       // 执行删除操作
       const { count } = await this.prisma.commandMonitorExecution.deleteMany({
@@ -252,6 +154,11 @@ export class CommandMonitorsService {
     }
   }
 
+  /**
+   * 清理特定服务器的所有执行记录
+   * @param serverId 服务器ID
+   * @returns 清理结果
+   */
   async cleanupExecutionsByServerId(
     serverId: number,
   ): Promise<CleanupResultDto> {
@@ -262,7 +169,7 @@ export class CommandMonitorsService {
       return CleanupUtil.cleanupByDateRange(
         this.prisma,
         'commandMonitorExecution',
-        'executedAt',
+        DateField.EXECUTED_AT,
         undefined,
         undefined,
         { serverId },
@@ -284,12 +191,17 @@ export class CommandMonitorsService {
     }
   }
 
-  async getAllEnabledMonitors(): Promise<CommandMonitorEntity[]> {
-    return this.prisma.commandMonitor.findMany({
-      where: { enabled: true },
-    });
-  }
-
+  /**
+   * 记录执行结果
+   * @param monitorId 监控ID
+   * @param serverId 服务器ID
+   * @param checkOutput 检查输出
+   * @param checkExitCode 检查退出码
+   * @param executed 是否执行
+   * @param executeOutput 执行输出
+   * @param executeExitCode 执行退出码
+   * @returns 执行记录实体
+   */
   async recordExecution(
     monitorId: number,
     serverId: number,
@@ -312,6 +224,11 @@ export class CommandMonitorsService {
     });
   }
 
+  /**
+   * 获取所有执行记录
+   * @param params 查询参数
+   * @returns 分页结果
+   */
   async getAllExecutions(
     params: CommandMonitorExecutionQueryDto = { page: 1, pageSize: 10 },
   ): Promise<PaginationResultDto<CommandMonitorExecutionEntity>> {
@@ -334,13 +251,13 @@ export class CommandMonitorsService {
     // 处理日期范围查询
     if (params.startDate || params.endDate) {
       where.executedAt = buildDateRangeFilter(
-        'executedAt',
+        DateField.EXECUTED_AT,
         params.startDate,
         params.endDate,
       );
     }
 
-    return this.paginationService.paginateByLimit<CommandMonitorExecutionEntity>(
+    return this.paginationService.paginateByLimit<CommandMonitorExecutionEntity, any>(
       this.prisma.commandMonitorExecution,
       params,
       where, // where

@@ -1,36 +1,35 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsInt, Min, Max, IsString, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
-
-/**
- * 排序方向枚举
- */
-export const SortOrder = {
-  ASCEND: 'ascend',
-  DESCEND: 'descend',
-} as const;
-
-export type SortOrderType = (typeof SortOrder)[keyof typeof SortOrder];
+import { SortOrder, SortOrderType, PaginationDefaults } from '../constants';
 
 /**
  * 分页参数DTO
  * 用于接收和验证分页参数
  */
 export class PaginationParamsDto {
-  @ApiProperty({ description: '页码', default: 1, required: false })
+  @ApiProperty({
+    description: '页码',
+    default: PaginationDefaults.PAGE,
+    required: false,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
   @Type(() => Number)
-  page?: number = 1;
+  page?: number = PaginationDefaults.PAGE;
 
-  @ApiProperty({ description: '每页数量', default: 10, required: false })
+  @ApiProperty({
+    description: '每页数量',
+    default: PaginationDefaults.PAGE_SIZE,
+    required: false,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(PaginationDefaults.MAX_PAGE_SIZE)
   @Type(() => Number)
-  pageSize?: number = 10;
+  pageSize?: number = PaginationDefaults.PAGE_SIZE;
 
   @ApiPropertyOptional({ description: '排序字段' })
   @IsOptional()

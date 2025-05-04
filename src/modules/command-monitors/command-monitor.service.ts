@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { CommandMonitorsService } from './command-monitors.service';
+import { CommandMonitorsService } from './services/command-monitors.service';
 import { SshService } from '../ssh/ssh.service';
 
 @Injectable()

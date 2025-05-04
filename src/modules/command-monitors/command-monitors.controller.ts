@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
-import { CommandMonitorsService } from './command-monitors.service';
+import { CommandMonitorsService } from './services/command-monitors.service';
 import { CreateCommandMonitorDto } from './dto/create-command-monitor.dto';
 import { UpdateCommandMonitorDto } from './dto/update-command-monitor.dto';
 import { CommandMonitorQueryDto } from './dto/command-monitor-query.dto';
