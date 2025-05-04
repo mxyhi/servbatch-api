@@ -7,6 +7,14 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  SystemSummaryDto,
+  SystemSummaryWithProxiesDto,
+} from './dto/system-summary.dto';
+import {
+  SystemSummary,
+  SystemSummaryWithProxies,
+} from './interfaces/system-summary.interface';
 
 @ApiTags('dashboard')
 @ApiBearerAuth()
@@ -16,15 +24,23 @@ export class DashboardController {
 
   @Get('summary')
   @ApiOperation({ summary: '获取系统摘要' })
-  @ApiResponse({ status: 200, description: '返回系统摘要信息' })
-  getSummary() {
+  @ApiResponse({
+    status: 200,
+    description: '返回系统摘要信息',
+    type: SystemSummaryDto,
+  })
+  getSummary(): Promise<SystemSummary> {
     return this.dashboardService.getSummary();
   }
 
   @Get('summary-with-proxies')
   @ApiOperation({ summary: '获取包含代理信息的系统摘要' })
-  @ApiResponse({ status: 200, description: '返回包含代理信息的系统摘要' })
-  getSummaryWithProxies() {
+  @ApiResponse({
+    status: 200,
+    description: '返回包含代理信息的系统摘要',
+    type: SystemSummaryWithProxiesDto,
+  })
+  getSummaryWithProxies(): Promise<SystemSummaryWithProxies> {
     return this.dashboardService.getSummaryWithProxies();
   }
 

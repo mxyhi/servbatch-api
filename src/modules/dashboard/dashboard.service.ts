@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { QueueStatsService } from '../queue/services/queue-stats.service'; // Updated import
+import { QueueStatsService } from '../queue/services/queue-stats.service';
 import { ProxiesService } from '../proxies/proxies.service';
 import { QueueStats } from '../queue/types/queue.types';
+import {
+  SystemSummary,
+  SystemSummaryWithProxies,
+} from './interfaces/system-summary.interface';
 
 @Injectable()
 export class DashboardService {
@@ -12,33 +16,56 @@ export class DashboardService {
     private readonly proxiesService: ProxiesService,
   ) {}
 
-  async getSummary() {
+  async getSummary(): Promise<SystemSummary> {
     const [
       serverCount,
+      onlineServers,
+      offlineServers,
+      unknownServers,
       taskCount,
       executionCount,
+      runningExecutions,
+      queuedExecutions,
       successfulExecutions,
       failedExecutions,
       queueStatus,
     ] = await Promise.all([
       this.prisma.server.count(),
+      this.prisma.server.count({
+        where: { status: 'online' },
+      }),
+      this.prisma.server.count({
+        where: { status: 'offline' },
+      }),
+      this.prisma.server.count({
+        where: { status: 'unknown' },
+      }),
       this.prisma.task.count(),
       this.prisma.taskExecution.count(),
+      this.prisma.taskExecution.count({
+        where: { status: 'running' },
+      }),
+      this.prisma.taskExecution.count({
+        where: { status: 'queued' },
+      }),
       this.prisma.taskExecution.count({
         where: { status: 'completed' },
       }),
       this.prisma.taskExecution.count({
         where: { status: 'failed' },
       }),
-      this.queueStatsService.getQueueStatus(), // Updated method call
+      this.queueStatsService.getQueueStatus(),
     ]);
 
     return {
-      serverCount,
-      taskCount,
-      executionCount,
-      successfulExecutions,
-      failedExecutions,
+      totalServers: serverCount,
+      onlineServers,
+      offlineServers,
+      unknownServers,
+      totalTasks: taskCount,
+      totalExecutions: executionCount,
+      runningExecutions,
+      queuedExecutions,
       queueStatus,
     };
   }
@@ -128,11 +155,28 @@ export class DashboardService {
     return result.items;
   }
 
-  async getSummaryWithProxies() {
-    const [summary, proxyItems] = await Promise.all([
-      this.getSummary(),
-      this.getProxyStatus(),
-    ]);
+  async getSummaryWithProxies(): Promise<SystemSummaryWithProxies> {
+    const [summary, proxyItems, todayExecutions, totalSuccessful, totalFailed] =
+      await Promise.all([
+        this.getSummary(),
+        this.getProxyStatus(),
+        // 获取今日执行数量
+        this.prisma.taskExecution.count({
+          where: {
+            createdAt: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            },
+          },
+        }),
+        // 获取成功执行总数
+        this.prisma.taskExecution.count({
+          where: { status: 'completed' },
+        }),
+        // 获取失败执行总数
+        this.prisma.taskExecution.count({
+          where: { status: 'failed' },
+        }),
+      ]);
 
     // 计算在线和离线代理数量
     const onlineProxies = proxyItems.filter(
@@ -140,11 +184,20 @@ export class DashboardService {
     ).length;
     const offlineProxies = proxyItems.length - onlineProxies;
 
+    // 计算成功率
+    const totalCompleted = totalSuccessful + totalFailed;
+    const successRate =
+      totalCompleted > 0
+        ? Math.round((totalSuccessful / totalCompleted) * 100)
+        : 100; // 如果没有完成的任务，则成功率为100%
+
     return {
       ...summary,
-      proxyCount: proxyItems.length,
+      totalProxies: proxyItems.length,
       onlineProxies,
       offlineProxies,
+      executionsToday: todayExecutions,
+      successRate,
     };
   }
 }
