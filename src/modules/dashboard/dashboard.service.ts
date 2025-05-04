@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
+import { QueueStatsService } from '../queue/services/queue-stats.service'; // Updated import
 import { ProxiesService } from '../proxies/proxies.service';
 import { QueueStats } from '../queue/types/queue.types';
 
@@ -8,7 +8,7 @@ import { QueueStats } from '../queue/types/queue.types';
 export class DashboardService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly queueService: QueueService,
+    private readonly queueStatsService: QueueStatsService, // Updated injection
     private readonly proxiesService: ProxiesService,
   ) {}
 
@@ -30,7 +30,7 @@ export class DashboardService {
       this.prisma.taskExecution.count({
         where: { status: 'failed' },
       }),
-      this.queueService.getQueueStatus(),
+      this.queueStatsService.getQueueStatus(), // Updated method call
     ]);
 
     return {

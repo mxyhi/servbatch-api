@@ -5,7 +5,7 @@ import { CreateTaskExecutionDto } from '../dto/create-task-execution.dto';
 import { TaskExecutionQueryDto } from '../dto/task-execution-query.dto';
 import { TasksService } from '../../tasks/tasks.service';
 import { ServersService } from '../../servers/servers.service';
-import { QueueService } from '../../queue/queue.service';
+import { QueueManagerService } from '../../queue/services/queue-manager.service'; // Updated import
 import {
   PaginationResultDto,
   PaginationParamsDto,
@@ -26,7 +26,7 @@ export class BaseTaskExecutionService {
     protected readonly prisma: PrismaService,
     protected readonly tasksService: TasksService,
     protected readonly serversService: ServersService,
-    protected readonly queueService: QueueService,
+    protected readonly queueManagerService: QueueManagerService, // Updated injection
     protected readonly paginationService: PaginationService,
   ) {}
 
@@ -73,7 +73,8 @@ export class BaseTaskExecutionService {
     });
 
     // 将任务添加到队列
-    const queueId = await this.queueService.enqueue(
+    const queueId = await this.queueManagerService.enqueue(
+      // Updated method call
       taskId,
       serverIds,
       priority,
@@ -204,7 +205,7 @@ export class BaseTaskExecutionService {
     // 如果任务在队列中，从队列中移除
     if (execution.status === 'queued') {
       // 这里需要实现队列取消逻辑
-      await this.queueService.cancel(id);
+      await this.queueManagerService.cancel(id); // Updated method call
     }
 
     // 更新任务状态
