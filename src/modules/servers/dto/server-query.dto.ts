@@ -1,12 +1,22 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum } from 'class-validator';
 import { PaginationParamsDto } from '../../../common/dto/pagination-params.dto';
+import { ServerStatus, ConnectionType } from '../../../common/constants';
+import {
+  ServerStatusType,
+  ConnectionTypeType,
+} from '../../../common/constants';
 
 /**
  * 服务器查询参数DTO
  * 用于接收和验证服务器查询参数
  */
-export class ServerQueryDto extends PaginationParamsDto {
+export class ServerQueryDto
+  extends PaginationParamsDto
+  implements Record<string, unknown>
+{
+  // 添加索引签名以满足Record<string, unknown>约束
+  [key: string]: unknown;
   @ApiPropertyOptional({ description: '服务器名称（模糊匹配）' })
   @IsOptional()
   @IsString()
@@ -17,19 +27,21 @@ export class ServerQueryDto extends PaginationParamsDto {
   @IsString()
   host?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: '服务器状态',
-    enum: ['online', 'offline', 'unknown']
+    enum: Object.values(ServerStatus),
+    enumName: 'ServerStatus',
   })
   @IsOptional()
-  @IsEnum(['online', 'offline', 'unknown'])
-  status?: string;
+  @IsEnum(ServerStatus)
+  status?: ServerStatusType;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: '连接类型',
-    enum: ['direct', 'proxy']
+    enum: Object.values(ConnectionType),
+    enumName: 'ConnectionType',
   })
   @IsOptional()
-  @IsEnum(['direct', 'proxy'])
-  connectionType?: string;
+  @IsEnum(ConnectionType)
+  connectionType?: ConnectionTypeType;
 }

@@ -11,10 +11,12 @@ import {
 import { PaginationResultDto, PaginationService } from '../../common';
 import { ServerQueryDto } from './dto/server-query.dto';
 import { BaseService } from '../../common/services/base.service';
+import { PrismaModel } from '../../common/types/utility-types';
 import {
   ErrorHandler,
   ErrorContext,
 } from '../../common/utils/error-handler.util';
+import { ServerStatusType } from '../../common/constants';
 
 @Injectable()
 export class ServersService extends BaseService<
@@ -36,8 +38,9 @@ export class ServersService extends BaseService<
   /**
    * 获取Prisma模型
    */
-  protected getModel() {
-    return this.prisma.server;
+  protected getModel(): PrismaModel<ServerEntity> {
+    // 使用类型断言使Prisma生成的类型与PrismaModel<ServerEntity>兼容
+    return this.prisma.server as unknown as PrismaModel<ServerEntity>;
   }
 
   /**
@@ -78,18 +81,21 @@ export class ServersService extends BaseService<
    * @param status 状态
    * @returns 更新后的服务器
    */
-  async updateStatus(id: number, status: string): Promise<ServerEntity> {
+  async updateStatus(
+    id: number,
+    status: ServerStatusType,
+  ): Promise<ServerEntity> {
     try {
-      // 先检查服务器是否存在
-      await this.findOne(id);
-
-      return await this.prisma.server.update({
+      const updatedServer = await this.prisma.server.update({
         where: { id },
         data: {
           status,
           lastChecked: new Date(),
         },
       });
+
+      // 使用类型断言确保返回类型符合ServerEntity
+      return updatedServer as unknown as ServerEntity;
     } catch (error) {
       const errorContext: ErrorContext = {
         operation: 'updateStatus',

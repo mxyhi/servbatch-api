@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { ProxiesService } from '../proxies/proxies.service';
+import { QueueStats } from '../queue/types/queue.types';
 
 @Injectable()
 export class DashboardService {

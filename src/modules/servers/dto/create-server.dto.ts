@@ -9,8 +9,12 @@ import {
   ValidateIf,
   IsEnum,
 } from 'class-validator';
+import { ConnectionType } from '../../../common/constants';
+import { ConnectionTypeType } from '../../../common/constants';
 
-export class CreateServerDto {
+export class CreateServerDto implements Record<string, unknown> {
+  // 添加索引签名以满足Record<string, unknown>约束
+  [key: string]: unknown;
   @ApiProperty({ description: '服务器名称' })
   @IsString()
   @IsNotEmpty()
@@ -46,18 +50,19 @@ export class CreateServerDto {
 
   @ApiPropertyOptional({
     description: '连接类型',
-    enum: ['direct', 'proxy'],
-    default: 'direct',
+    enum: Object.values(ConnectionType),
+    enumName: 'ConnectionType',
+    default: ConnectionType.DIRECT,
   })
-  @IsEnum(['direct', 'proxy'])
+  @IsEnum(ConnectionType)
   @IsOptional()
-  connectionType?: string = 'direct';
+  connectionType?: ConnectionTypeType = ConnectionType.DIRECT;
 
   @ApiPropertyOptional({
     description: '代理ID（如果通过代理连接）',
   })
   @IsString()
   @IsOptional()
-  @ValidateIf((o) => o.connectionType === 'proxy')
+  @ValidateIf((o) => o.connectionType === ConnectionType.PROXY)
   proxyId?: string;
 }

@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PaginationResultDto, PaginationService } from '../../common';
 import { PaginationParamsDto } from '../dto/pagination-params.dto';
 import { ErrorHandler } from '../utils/error-handler.util';
+import { PrismaModel, WhereCondition } from '../types/utility-types';
 
 /**
  * 通用基础服务类
@@ -14,9 +15,9 @@ import { ErrorHandler } from '../utils/error-handler.util';
  * @template QueryDto - 查询DTO类型，扩展自PaginationParamsDto
  */
 export abstract class BaseService<
-  T,
-  CreateDto extends Record<string, any>,
-  UpdateDto extends Partial<Record<string, any>>,
+  T extends Record<string, unknown>,
+  CreateDto extends Record<string, unknown>,
+  UpdateDto extends Partial<Record<string, unknown>>,
   QueryDto extends PaginationParamsDto,
 > {
   protected abstract readonly logger: Logger;
@@ -30,14 +31,14 @@ export abstract class BaseService<
   /**
    * 获取Prisma模型
    */
-  protected abstract getModel(): any;
+  protected abstract getModel(): PrismaModel<T>;
 
   /**
    * 构建查询条件
    * @param params 查询参数
    * @returns 查询条件
    */
-  protected abstract buildWhereClause(params: QueryDto): any;
+  protected abstract buildWhereClause(params: QueryDto): WhereCondition<T>;
 
   /**
    * 创建实体
@@ -72,10 +73,11 @@ export abstract class BaseService<
       const where = this.buildWhereClause(params);
 
       // 使用分页服务进行查询
+      // 使用类型断言确保类型兼容性
       return this.paginationService.paginateByLimit<T, any>(
         this.getModel(),
         params,
-        where,
+        where as any,
         { createdAt: 'desc' },
         {},
       );

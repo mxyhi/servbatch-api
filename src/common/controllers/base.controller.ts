@@ -85,7 +85,7 @@ function ApiDecorators(options: {
  * @template Service - 服务类型，必须扩展自BaseService
  */
 export abstract class BaseController<
-  T,
+  T extends Record<string, unknown>,
   CreateDto extends Record<string, any>,
   UpdateDto extends Partial<Record<string, any>>,
   QueryDto extends Record<string, any>,

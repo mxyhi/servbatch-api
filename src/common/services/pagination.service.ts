@@ -6,6 +6,7 @@ import {
   WhereCondition,
   OrderByCondition,
   IncludeRelation,
+  PrismaModel,
 } from '../types/utility-types';
 
 /**
@@ -58,7 +59,7 @@ export class PaginationService {
    * @returns 分页结果
    */
   async paginateByLimit<T, M extends Record<string, any>>(
-    model: any,
+    model: PrismaModel<T>,
     params: PaginationParamsDto,
     where: WhereCondition<M> = {} as WhereCondition<M>,
     orderBy: OrderByCondition<M> = {} as OrderByCondition<M>,
@@ -102,7 +103,7 @@ export class PaginationService {
    * @deprecated 请使用 paginateByLimit 方法
    */
   async paginate<T, M extends Record<string, any>>(
-    model: any,
+    model: PrismaModel<T>,
     params: PaginationParamsDto,
     where: WhereCondition<M> = {} as WhereCondition<M>,
     orderBy: OrderByCondition<M> = {} as OrderByCondition<M>,

@@ -9,18 +9,25 @@ import {
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 /**
- * 错误类型枚举
+ * 错误类型常量
+ * 使用常量对象代替枚举，提高类型安全性和编译效率
  */
-export enum ErrorType {
-  DATABASE = 'DATABASE_ERROR',
-  NOT_FOUND = 'NOT_FOUND_ERROR',
-  VALIDATION = 'VALIDATION_ERROR',
-  CONFLICT = 'CONFLICT_ERROR',
-  AUTHORIZATION = 'AUTHORIZATION_ERROR',
-  NETWORK = 'NETWORK_ERROR',
-  TIMEOUT = 'TIMEOUT_ERROR',
-  UNKNOWN = 'UNKNOWN_ERROR',
-}
+export const ErrorType = {
+  DATABASE: 'DATABASE_ERROR',
+  NOT_FOUND: 'NOT_FOUND_ERROR',
+  VALIDATION: 'VALIDATION_ERROR',
+  CONFLICT: 'CONFLICT_ERROR',
+  AUTHORIZATION: 'AUTHORIZATION_ERROR',
+  NETWORK: 'NETWORK_ERROR',
+  TIMEOUT: 'TIMEOUT_ERROR',
+  UNKNOWN: 'UNKNOWN_ERROR',
+} as const;
+
+/**
+ * 错误类型的类型定义
+ * 使用typeof和keyof从常量对象中提取类型
+ */
+export type ErrorTypeValue = (typeof ErrorType)[keyof typeof ErrorType];
 
 /**
  * 错误上下文接口
@@ -76,7 +83,7 @@ export class ErrorHandler {
    * @param error 错误对象
    * @returns 错误类型
    */
-  private static classifyError(error: unknown): ErrorType {
+  private static classifyError(error: unknown): ErrorTypeValue {
     if (error instanceof NotFoundException) {
       return ErrorType.NOT_FOUND;
     }
@@ -131,7 +138,7 @@ export class ErrorHandler {
    */
   private static convertToHttpException(
     error: Error,
-    errorType: ErrorType,
+    errorType: ErrorTypeValue,
   ): Error {
     // 如果已经是HTTP异常，则直接返回
     if (error instanceof HttpException) {
@@ -172,7 +179,7 @@ export class ErrorHandler {
     context?: ErrorContext;
   } {
     const message = error instanceof Error ? error.message : String(error);
-    const errorType = this.classifyError(error);
+    const errorType = this.classifyError(error) as string;
 
     return {
       success: false,

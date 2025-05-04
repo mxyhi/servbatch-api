@@ -7,7 +7,9 @@ import { SortOrder, SortOrderType, PaginationDefaults } from '../constants';
  * 分页参数DTO
  * 用于接收和验证分页参数
  */
-export class PaginationParamsDto {
+export class PaginationParamsDto implements Record<string, unknown> {
+  // 添加索引签名以满足Record<string, unknown>约束
+  [key: string]: unknown;
   @ApiProperty({
     description: '页码',
     default: PaginationDefaults.PAGE,

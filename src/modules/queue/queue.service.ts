@@ -8,20 +8,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Interval } from '@nestjs/schedule';
 import { SshService } from '../ssh/ssh.service';
 import { TasksService } from '../tasks/tasks.service';
+import { QueueStats } from './types/queue.types';
 
 // 缓存条目接口
 interface CacheEntry<T> {
   value: T;
   timestamp: number;
-}
-
-// 队列状态统计接口
-interface QueueStats {
-  waiting: number;
-  processing: number;
-  completed: number;
-  failed: number;
-  cancelled: number;
 }
 
 @Injectable()
