@@ -14,6 +14,7 @@ import {
   CpuUsageDto,
   MemoryUsageDto,
   GpuUsageDto,
+  GpuMemoryUsageDto, // 导入嵌套的 GPU 内存 DTO
 } from './dto/get-server-resources.dto';
 import { ExecuteCommandDto } from './dto/execute-command.dto';
 import { ExecuteCommandResponseDto } from './dto/execute-command-response.dto';
@@ -113,31 +114,70 @@ export class ServerInteractionService {
     // Ensure server exists before proceeding
     await this.findServerOrFail(id);
     const timestamp = new Date().toISOString();
-    let cpuUsage: number | null = null;
-    let memUsed: number | null = null;
-    let memTotal: number | null = null;
-    let memUsage: number | null = null;
-    let gpuInfo: GpuUsageDto[] = [];
+    let cpuData: CpuUsageDto = { usage: 0, cores: 0, loadAverage: [0, 0, 0] };
+    let memoryData: MemoryUsageDto = { total: 0, used: 0, free: 0, usage: 0 };
+    let gpuData: GpuUsageDto[] = [];
 
     try {
-      // Pass the server ID (number)
-      const cpuCmd = "top -bn1 | grep '^%Cpu(s)' | awk '{print $2+$4}'";
-      const cpuResult = await this.sshService.executeCommand(id, cpuCmd);
-      if (cpuResult.exitCode === 0 && cpuResult.stdout.trim()) {
-        const usage = parseFloat(cpuResult.stdout.trim());
-        cpuUsage = !isNaN(usage) ? usage : null;
-        if (cpuUsage === null) {
+      // --- CPU ---
+      // Usage
+      const cpuUsageCmd = "top -bn1 | grep '^%Cpu(s)' | awk '{print $2+$4}'";
+      const cpuUsageResult = await this.sshService.executeCommand(
+        id,
+        cpuUsageCmd,
+      );
+      if (cpuUsageResult.exitCode === 0 && cpuUsageResult.stdout.trim()) {
+        const usage = parseFloat(cpuUsageResult.stdout.trim());
+        cpuData.usage = !isNaN(usage) ? usage : 0;
+      } else {
+        this.logger.warn(
+          `CPU usage command failed or returned empty output for server ${id}. stderr: ${cpuUsageResult.stderr}`,
+        );
+      }
+
+      // Cores
+      const cpuCoresCmd = 'nproc';
+      const cpuCoresResult = await this.sshService.executeCommand(
+        id,
+        cpuCoresCmd,
+      );
+      if (cpuCoresResult.exitCode === 0 && cpuCoresResult.stdout.trim()) {
+        const cores = parseInt(cpuCoresResult.stdout.trim(), 10);
+        cpuData.cores = !isNaN(cores) ? cores : 0;
+      } else {
+        this.logger.warn(
+          `CPU cores command failed or returned empty output for server ${id}. stderr: ${cpuCoresResult.stderr}`,
+        );
+      }
+
+      // Load Average
+      const cpuLoadCmd = 'uptime';
+      const cpuLoadResult = await this.sshService.executeCommand(
+        id,
+        cpuLoadCmd,
+      );
+      if (cpuLoadResult.exitCode === 0 && cpuLoadResult.stdout.trim()) {
+        const loadMatch = cpuLoadResult.stdout.match(
+          /load average:\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)/,
+        );
+        if (loadMatch && loadMatch.length === 4) {
+          cpuData.loadAverage = [
+            parseFloat(loadMatch[1]),
+            parseFloat(loadMatch[2]),
+            parseFloat(loadMatch[3]),
+          ].map((load) => (!isNaN(load) ? load : 0));
+        } else {
           this.logger.warn(
-            `Could not parse CPU usage from 'top' output: ${cpuResult.stdout} for server ${id}`,
+            `Could not parse load average from 'uptime' output: ${cpuLoadResult.stdout} for server ${id}`,
           );
         }
       } else {
         this.logger.warn(
-          `CPU command failed or returned empty output for server ${id}. stderr: ${cpuResult.stderr}`,
+          `CPU load command failed or returned empty output for server ${id}. stderr: ${cpuLoadResult.stderr}`,
         );
       }
 
-      // Pass the server ID (number)
+      // --- Memory ---
       const memCmd = 'free -m';
       const memResult = await this.sshService.executeCommand(id, memCmd);
       if (memResult.exitCode === 0 && memResult.stdout.trim()) {
@@ -145,13 +185,16 @@ export class ServerInteractionService {
         const memLine = lines.find((line) => line.startsWith('Mem:'));
         if (memLine) {
           const parts = memLine.split(/\s+/);
+          // Expected format: Mem: total used free shared buff/cache available
           if (parts.length >= 4) {
             const total = parseInt(parts[1], 10);
             const used = parseInt(parts[2], 10);
-            if (!isNaN(total) && !isNaN(used) && total > 0) {
-              memTotal = total;
-              memUsed = used;
-              memUsage = parseFloat(((memUsed / memTotal) * 100).toFixed(1));
+            const free = parseInt(parts[3], 10); // Get the 'free' value
+            if (!isNaN(total) && !isNaN(used) && !isNaN(free) && total > 0) {
+              memoryData.total = total;
+              memoryData.used = used;
+              memoryData.free = free;
+              memoryData.usage = parseFloat(((used / total) * 100).toFixed(1));
             } else {
               this.logger.warn(
                 `Could not parse memory values from 'free -m' output: ${memLine} for server ${id}`,
@@ -173,7 +216,7 @@ export class ServerInteractionService {
         );
       }
 
-      // Pass the server ID (number)
+      // --- GPU ---
       const checkGpuCmd = 'command -v nvidia-smi';
       const checkGpuResult = await this.sshService.executeCommand(
         id,
@@ -181,45 +224,69 @@ export class ServerInteractionService {
       );
 
       if (checkGpuResult.exitCode === 0 && checkGpuResult.stdout.trim()) {
-        // Pass the server ID (number)
         const gpuCmd =
-          'nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits';
+          'nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits'; // Added index
         const gpuResult = await this.sshService.executeCommand(id, gpuCmd);
         if (gpuResult.exitCode === 0 && gpuResult.stdout.trim()) {
           const lines = gpuResult.stdout.trim().split('\n');
-          gpuInfo = lines
+          gpuData = lines
             .map((line) => {
-              const [name, utilization, memUsedStr, memTotalStr, temp] = line
-                .split(',')
-                .map((s) => s.trim());
-              const memUsedGpu = parseInt(memUsedStr, 10);
+              const [
+                indexStr,
+                name,
+                utilization,
+                memUsedStr,
+                memTotalStr,
+                temp,
+              ] = line.split(',').map((s) => s.trim());
+
+              const index = parseInt(indexStr, 10);
+              const usage = parseFloat(utilization);
+              const temperature = parseInt(temp, 10);
               const memTotalGpu = parseInt(memTotalStr, 10);
-              const utilizationPercent = parseFloat(utilization);
-              const temperatureCelsius = parseInt(temp, 10);
-              let memoryUsagePercent: number | null = null;
+              const memUsedGpu = parseInt(memUsedStr, 10);
+
+              let memoryUsage: GpuMemoryUsageDto = {
+                total: 0,
+                used: 0,
+                free: 0,
+                usage: 0,
+              };
+
               if (
-                !isNaN(memUsedGpu) &&
                 !isNaN(memTotalGpu) &&
+                !isNaN(memUsedGpu) &&
                 memTotalGpu > 0
               ) {
-                memoryUsagePercent = parseFloat(
+                const memFreeGpu = memTotalGpu - memUsedGpu;
+                const memUsagePercent = parseFloat(
                   ((memUsedGpu / memTotalGpu) * 100).toFixed(1),
                 );
+                memoryUsage = {
+                  total: memTotalGpu,
+                  used: memUsedGpu,
+                  free: memFreeGpu,
+                  usage: !isNaN(memUsagePercent) ? memUsagePercent : 0,
+                };
+              } else {
+                this.logger.warn(
+                  `Could not parse GPU memory values for GPU index ${indexStr} on server ${id}: total=${memTotalStr}, used=${memUsedStr}`,
+                );
               }
-              return {
-                name: name || null,
-                utilizationPercent: !isNaN(utilizationPercent)
-                  ? utilizationPercent
-                  : null,
-                memoryUsedMb: !isNaN(memUsedGpu) ? memUsedGpu : null,
-                memoryTotalMb: !isNaN(memTotalGpu) ? memTotalGpu : null,
-                memoryUsagePercent: memoryUsagePercent,
-                temperatureCelsius: !isNaN(temperatureCelsius)
-                  ? temperatureCelsius
-                  : null,
+
+              const gpu: GpuUsageDto = {
+                index: !isNaN(index) ? index : -1, // Use -1 or similar for invalid index
+                name: name || 'Unknown GPU',
+                usage: !isNaN(usage) ? usage : 0,
+                memory: memoryUsage,
+                temperature: !isNaN(temperature) ? temperature : 0,
               };
+              // Filter out GPUs with invalid index or missing name
+              return gpu.index !== -1 && gpu.name !== 'Unknown GPU'
+                ? gpu
+                : null;
             })
-            .filter((gpu) => gpu.name);
+            .filter((gpu): gpu is GpuUsageDto => gpu !== null); // Type guard to filter out nulls
         } else {
           this.logger.warn(
             `GPU command 'nvidia-smi' failed or returned empty output for server ${id}. stderr: ${gpuResult.stderr}`,
@@ -238,19 +305,15 @@ export class ServerInteractionService {
       this.handleSshError(error, id, 'resources');
     }
 
-    const cpuData: CpuUsageDto = { usagePercent: cpuUsage };
-    const memoryData: MemoryUsageDto = {
-      usedMb: memUsed,
-      totalMb: memTotal,
-      usagePercent: memUsage,
-    };
-
-    return new GetServerResourcesDto({
+    // Return the data conforming to the updated DTO structure
+    // Note: We are returning a plain object matching the DTO structure,
+    // not necessarily an instance of the DTO class itself unless needed for validation/serialization.
+    return {
       cpu: cpuData,
       memory: memoryData,
-      gpu: gpuInfo.length > 0 ? gpuInfo : undefined,
+      gpu: gpuData, // Ensure gpu is always an array, even if empty
       timestamp,
-    });
+    };
   }
 
   /**
