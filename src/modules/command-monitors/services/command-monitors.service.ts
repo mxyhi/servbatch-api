@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateCommandMonitorDto } from '../dto/create-command-monitor.dto';
 import { UpdateCommandMonitorDto } from '../dto/update-command-monitor.dto';
@@ -12,6 +12,7 @@ import { CleanupResultDto } from '../dto/cleanup-result.dto';
 import { PaginationResultDto, PaginationService } from '../../../common';
 import { BaseCommandMonitorService } from './base-command-monitor.service';
 import { ExecutionService } from './execution.service';
+import { CommandMonitorService } from '../command-monitor.service';
 
 /**
  * 命令监控服务
@@ -25,6 +26,8 @@ export class CommandMonitorsService {
     private readonly paginationService: PaginationService,
     private readonly baseService: BaseCommandMonitorService,
     private readonly executionService: ExecutionService,
+    @Inject(forwardRef(() => CommandMonitorService))
+    private readonly commandMonitorService: CommandMonitorService,
   ) {}
 
   // 基础CRUD操作，委托给基础服务
@@ -59,7 +62,10 @@ export class CommandMonitorsService {
   }
 
   async remove(id: number): Promise<CommandMonitorEntity> {
-    return this.baseService.remove(id);
+    const result = await this.baseService.remove(id);
+    // 删除命令监控后清除缓存，避免后续操作使用已删除的监控
+    this.commandMonitorService.invalidateCache();
+    return result;
   }
 
   async enable(id: number): Promise<CommandMonitorEntity> {

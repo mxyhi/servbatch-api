@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { CommandMonitorsService } from './services/command-monitors.service';
 import { SshService } from '../ssh/ssh.service';
@@ -20,6 +20,7 @@ export class CommandMonitorService {
   private readonly cacheTTL = 60000; // 缓存有效期，单位毫秒
 
   constructor(
+    @Inject(forwardRef(() => CommandMonitorsService))
     private readonly commandMonitorsService: CommandMonitorsService,
     private readonly sshService: SshService,
   ) {}
@@ -34,7 +35,10 @@ export class CommandMonitorService {
     this.logger.log('开始检查命令监控...');
 
     try {
-      // 获取所有启用的命令监控，使用缓存
+      // 每次检查前先清除缓存，确保获取最新数据
+      this.invalidateCache();
+
+      // 获取所有启用的命令监控
       const monitors = await this.getCachedEnabledMonitors();
 
       if (monitors.length === 0) {
@@ -115,6 +119,16 @@ export class CommandMonitorService {
    */
   private async processMonitor(monitor: any): Promise<void> {
     try {
+      // 先验证监控是否仍然存在
+      try {
+        await this.commandMonitorsService.findOne(monitor.id);
+      } catch (error) {
+        // 如果监控不存在，清除缓存并跳过处理
+        this.invalidateCache();
+        this.logger.warn(`命令监控 ID ${monitor.id} 不存在，跳过处理`);
+        return;
+      }
+
       // 执行检查命令
       const checkResult = await this.sshService.executeCommand(
         monitor.serverId,
@@ -143,6 +157,16 @@ export class CommandMonitorService {
         this.logger.log(
           `服务器 ${monitor.serverId} 上的命令监控 "${monitor.name}" 执行完成，退出码: ${executeExitCode}`,
         );
+      }
+
+      // 再次验证监控是否仍然存在（可能在执行过程中被删除）
+      try {
+        await this.commandMonitorsService.findOne(monitor.id);
+      } catch (error) {
+        // 如果监控不存在，清除缓存并跳过记录
+        this.invalidateCache();
+        this.logger.warn(`命令监控 ID ${monitor.id} 不存在，跳过记录执行结果`);
+        return;
       }
 
       // 记录执行结果

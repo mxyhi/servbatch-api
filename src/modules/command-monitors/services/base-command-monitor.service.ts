@@ -135,11 +135,30 @@ export class BaseCommandMonitorService {
    */
   async remove(id: number): Promise<CommandMonitorEntity> {
     try {
-      return await this.prisma.commandMonitor.delete({
-        where: { id },
+      // 先检查命令监控是否存在
+      await this.findOne(id);
+
+      // 使用事务确保原子性操作
+      return await this.prisma.$transaction(async (tx) => {
+        // 1. 删除与命令监控相关的所有执行历史记录
+        const { count } = await tx.commandMonitorExecution.deleteMany({
+          where: { monitorId: id },
+        });
+
+        this.logger.log(`已删除命令监控ID ${id} 的 ${count} 条执行历史记录`);
+
+        // 2. 删除命令监控
+        return await tx.commandMonitor.delete({
+          where: { id },
+        });
       });
     } catch (error) {
-      throw new NotFoundException(`命令监控ID ${id} 不存在`);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException(
+        `删除命令监控ID ${id} 失败: ${error.message}`,
+      );
     }
   }
 
