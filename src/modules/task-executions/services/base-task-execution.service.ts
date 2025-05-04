@@ -38,19 +38,45 @@ export class BaseTaskExecutionService {
   async create(
     createTaskExecutionDto: CreateTaskExecutionDto,
   ): Promise<{ message: string; queueId: number }> {
-    // 验证任务是否存在
-    await this.tasksService.findOne(createTaskExecutionDto.taskId);
+    const { taskId, serverIds, priority } = createTaskExecutionDto;
 
-    // 验证所有服务器是否存在
-    for (const serverId of createTaskExecutionDto.serverIds) {
-      await this.serversService.findOne(serverId);
-    }
+    // 使用事务批量验证任务和服务器是否存在
+    await this.prisma.$transaction(async (prisma) => {
+      // 验证任务是否存在
+      const task = await prisma.task.findUnique({
+        where: { id: taskId },
+        select: { id: true },
+      });
+
+      if (!task) {
+        throw new NotFoundException(`任务ID ${taskId} 不存在`);
+      }
+
+      // 批量验证所有服务器是否存在
+      if (serverIds.length > 0) {
+        const foundServers = await prisma.server.findMany({
+          where: { id: { in: serverIds } },
+          select: { id: true },
+        });
+
+        const foundServerIds = foundServers.map((server) => server.id);
+        const missingServerIds = serverIds.filter(
+          (id) => !foundServerIds.includes(id),
+        );
+
+        if (missingServerIds.length > 0) {
+          throw new NotFoundException(
+            `以下服务器ID不存在: ${missingServerIds.join(', ')}`,
+          );
+        }
+      }
+    });
 
     // 将任务添加到队列
     const queueId = await this.queueService.enqueue(
-      createTaskExecutionDto.taskId,
-      createTaskExecutionDto.serverIds,
-      createTaskExecutionDto.priority,
+      taskId,
+      serverIds,
+      priority,
     );
 
     return {

@@ -152,6 +152,21 @@ export class ProxiesService {
   ): Promise<PaginationResultDto<ProxyEntity>> {
     const onlineProxyIds = this.proxyGateway.getOnlineProxies();
 
+    // 计算分页参数
+    const page = params.page ?? 1;
+    const pageSize = params.pageSize ?? 10;
+
+    // 如果没有在线代理，直接返回空结果，避免不必要的数据库查询
+    if (onlineProxyIds.length === 0) {
+      return {
+        total: 0,
+        page,
+        pageSize,
+        totalPages: 0,
+        items: [],
+      };
+    }
+
     // 构建查询条件
     const where: any = {
       id: {
@@ -170,23 +185,30 @@ export class ProxiesService {
       };
     }
 
-    // 使用分页服务进行查询
-    const result = await this.paginationService.paginateByLimit<
-      ProxyEntity,
-      any
-    >(
-      this.prisma.proxy,
-      params,
-      where, // where
-      { createdAt: 'desc' }, // orderBy
-      {}, // include
-    );
+    const skip = (page - 1) * pageSize;
+
+    // 使用单次事务查询同时获取总数和分页数据，减少数据库查询次数
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.proxy.count({ where }),
+      this.prisma.proxy.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+    ]);
 
     // 添加在线状态
-    result.items = result.items.map((proxy) => ({
-      ...proxy,
-      status: 'online', // 这里已经确定是在线的
-    }));
+    const result = {
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+      items: items.map((proxy) => ({
+        ...proxy,
+        status: 'online', // 这里已经确定是在线的
+      })),
+    };
 
     return result;
   }

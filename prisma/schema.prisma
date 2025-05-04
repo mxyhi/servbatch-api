@@ -55,6 +55,10 @@ model TaskExecution {
   server      Server    @relation(fields: [serverId], references: [id])
   task        Task      @relation(fields: [taskId], references: [id])
 
+  @@index([taskId], name: "task_executions_task_id_idx")
+  @@index([serverId], name: "task_executions_server_id_idx")
+  @@index([status], name: "task_executions_status_idx")
+  @@index([createdAt], name: "task_executions_created_at_idx")
   @@map("task_executions")
 }
 
@@ -69,6 +73,9 @@ model Queue {
   startedAt   DateTime?
   completedAt DateTime?
 
+  @@index([status], name: "queues_status_idx")
+  @@index([priority], name: "queues_priority_idx")
+  @@index([createdAt], name: "queues_created_at_idx")
   @@map("queues")
 }
 
@@ -85,6 +92,8 @@ model CommandMonitor {
   executions     CommandMonitorExecution[]
   server         Server                    @relation(fields: [serverId], references: [id])
 
+  @@index([serverId], name: "command_monitors_server_id_idx")
+  @@index([enabled], name: "command_monitors_enabled_idx")
   @@map("command_monitors")
 }
 
@@ -113,6 +122,8 @@ model Proxy {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  @@index([name], name: "proxies_name_idx")
+  @@index([lastSeen], name: "proxies_last_seen_idx")
   @@map("proxies")
 }
 
