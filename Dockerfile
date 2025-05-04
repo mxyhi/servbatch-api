@@ -50,4 +50,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # 启动命令
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]
